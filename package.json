@@ -17,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/Eanazir/SolarTrackerWebApp/issues"
   },
-  "homepage": "https://github.com/Eanazir/SolarTrackerWebApp#readme"
+  "homepage": "https://github.com/Eanazir/SolarTrackerWebApp#readme",
+  "devDependencies": {
+    "@types/react-plotly.js": "^2.6.3"
+  }
 }
