@@ -45,7 +45,7 @@ const LiveDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 2000); // Update every 2 seconds
+    const interval = setInterval(fetchData, 2000); // Fetch data every 2 seconds in ms
     return () => clearInterval(interval);
   }, []);
 

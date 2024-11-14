@@ -49,12 +49,14 @@ const CustomLineChart: React.FC<CustomLineChartProps> = ({
                 .padStart(2, '0')}`;
             }}
             minTickGap={20}
+            allowDataOverflow={false} // Prevent axis from shifting
           />
           <YAxis
             domain={['auto', 'auto']}
             unit={unit}
             allowDecimals={false}
             tick={{ fontSize: 12 }}
+            allowDataOverflow={false} // Prevent axis from shifting
           />
           <Tooltip
             labelFormatter={(label) => {
