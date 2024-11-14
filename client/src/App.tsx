@@ -1,35 +1,53 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+// src/App.tsx
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
+import LiveDashboard from './pages/LiveDashboard';
+// import History from './components/History';
+// import ExportData from './components/ExportData';
 
-function App() {
-  const [count, setCount] = useState(0)
-
+const App: React.FC = () => {
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <Router>
+      <nav className="flex justify-around bg-blue-600 p-4 text-white">
+        <NavLink
+          to="/"
+          className={({ isActive }) =>
+            isActive
+              ? "font-extrabold bg-blue-800 p-2 rounded transition duration-300"
+              : "font-bold p-2 rounded transition duration-300"
+          }
+          end
+        >
+          Live Dashboard
+        </NavLink>
+        <NavLink
+          to="/history"
+          className={({ isActive }) =>
+            isActive
+              ? "font-extrabold bg-blue-800 p-2 rounded transition duration-300"
+              : "font-bold p-2 rounded transition duration-300"
+          }
+        >
+          History
+        </NavLink>
+        <NavLink
+          to="/export"
+          className={({ isActive }) =>
+            isActive
+              ? "font-extrabold bg-blue-800 p-2 rounded transition duration-300"
+              : "font-bold p-2 rounded transition duration-300"
+          }
+        >
+          Export
+        </NavLink>
+      </nav>
+      <Routes>
+        <Route path="/" element={<LiveDashboard />} />
+        {/* <Route path="/history" element={<History />} />
+        <Route path="/export" element={<ExportData />} /> */}
+      </Routes>
+    </Router>
+  );
+};
 
-export default App
+export default App;
