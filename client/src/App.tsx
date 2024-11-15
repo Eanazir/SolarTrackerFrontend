@@ -2,8 +2,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
 import LiveDashboard from './pages/LiveDashboard';
-// import History from './components/History';
-// import ExportData from './components/ExportData';
+import History from './pages/History';
+import ExportData from './pages/ExportData';
 
 const App: React.FC = () => {
   return (
@@ -43,6 +43,8 @@ const App: React.FC = () => {
       </nav>
       <Routes>
         <Route path="/" element={<LiveDashboard />} />
+        <Route path="/history" element={<History />} />
+        <Route path="/export" element = {<ExportData/>} />
         {/* <Route path="/history" element={<History />} />
         <Route path="/export" element={<ExportData />} /> */}
       </Routes>
