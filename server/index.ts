@@ -1,8 +1,10 @@
 import express from 'express';
-import { Pool } from 'pg';
+import pkg from 'pg';
+
+const { Pool } = pkg;
 
 const app = express();
-const port = 5000;
+const port = 3000;
 
 const pool = new Pool({
   user: 'your_db_user',
