@@ -1,4 +1,4 @@
-// src/components/ThermometerChart.tsx
+// src/graphs/ThermometerChart.tsx
 import React from 'react';
 import { PieChart, Pie, Cell } from 'recharts';
 
@@ -9,7 +9,7 @@ interface ThermometerChartProps {
 }
 
 const ThermometerChart: React.FC<ThermometerChartProps> = ({ 
-  temperature,
+  temperature = 0, // Default value to prevent undefined
   minTemp = -20,
   maxTemp = 50
 }) => {
@@ -53,7 +53,9 @@ const ThermometerChart: React.FC<ThermometerChartProps> = ({
           </Pie>
         </PieChart>
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 translate-y-[-25%] text-center">
-          <span className="text-3xl font-bold">{temperature.toFixed(2)}°C</span>
+          <span className="text-3xl font-bold">
+            {Number.isFinite(temperature) ? temperature.toFixed(2) : '0.00'}°C
+          </span>
         </div>
       </div>
       <div className="w-full flex justify-between px-4 mt-2">
