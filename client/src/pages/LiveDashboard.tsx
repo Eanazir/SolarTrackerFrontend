@@ -18,6 +18,19 @@ interface LiveData {
   timestamp: string;
 }
 
+const transformDatabaseData = (dbData: any): LiveData => {
+  return {
+    temperatureC: dbData.temperature_c,
+    temperatureF: dbData.temperature_f,
+    humidity: dbData.humidity,
+    airPressure: dbData.air_pressure || dbData.pressure, // fallback to pressure if air_pressure is null
+    windSpeed: dbData.wind_speed || dbData.ambientWeatherWindSpeed,
+    windDirection: dbData.wind_direction || dbData.ambientWeatherWindDirection,
+    imageUrl: dbData.image_url || testImage, // fallback to test image if null
+    timestamp: dbData.timestamp
+  };
+};
+
 interface DataPoint {
   time: number; // Timestamp in milliseconds
   value: number;
@@ -51,6 +64,7 @@ const LiveDashboard: React.FC = () => {
 
   const fetchData = async () => {
     try {
+      // http://18.226.186.142/api/live-data
       // const response = await axios.get<LiveData>('http://localhost:5000/api/live-data');
       // setData(response.data);
       const newData = generateBogusData();
@@ -90,6 +104,7 @@ const LiveDashboard: React.FC = () => {
             dataKey="value"
             unit="°C"
             strokeColor="#FF4500"
+            tickFormat='hourly'
           />
         </div>
         {/* Humidity Charts */}
@@ -100,6 +115,7 @@ const LiveDashboard: React.FC = () => {
             dataKey="value"
             unit="%"
             strokeColor="#1E90FF"
+            tickFormat='hourly'
           />
         </div>
         {/* Air Pressure Charts */}
@@ -110,6 +126,7 @@ const LiveDashboard: React.FC = () => {
             dataKey="value"
             unit=" hPa"
             strokeColor="#32CD32"
+            tickFormat='hourly'
           />
         </div>
         {/* Wind Gauges */}
