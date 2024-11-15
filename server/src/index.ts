@@ -2,7 +2,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import weatherRoutes from './routes/weatherRoutes';
+import weatherRoutes from './routes/weatherRoutes.js';
 
 dotenv.config();
 
@@ -20,19 +20,19 @@ app.use(cors());
 app.use(express.json()); // To parse JSON bodies
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err.stack);
-  res.status(500).json({ error: 'Internal Server Error' });
+  res.status(500).json({ error: 'Internal Server Error, index' });
 });
 
 // Routes
-app.use('/api', weatherRoutes);
+app.use('/', weatherRoutes);
 
 // Health Check Route
-app.get('/', (req, res) => {
+app.get('/test', (req, res) => {
   res.send('Weather Tracker API is running.');
 });
 
 // Start the server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+const PORT = parseInt(process.env.PORT || '3000', 10);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 });

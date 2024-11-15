@@ -1,45 +1,45 @@
 // server/src/controllers/weatherController.ts
 import { Request, Response } from 'express';
-import pool from '../config/db';
+import pool from '../config/db.js';
 import { Parser } from 'json2csv';
 
 // Existing insertWeatherDataWithImage handler
 export const insertWeatherDataWithImage = async (req: Request, res: Response): Promise<Response> => {
-    const {
-      temperature_c,
-      temperature_f,
-      humidity,
-      air_pressure,
-      wind_speed,
-      wind_direction,
-      timestamp,
-      pressure,
-      ambientWeatherBatteryOk,
-      ambientWeatherTemp,
-      ambientWeatherHumidity,
-      ambientWeatherWindDirection,
-      ambientWeatherWindSpeed,
-      ambientWeatherWindMaxSpeed,
-      ambientWeatherRain,
-      ambientWeatherUV,
-      ambientWeatherUVI,
-      ambientWeatherLightLux,
-    } = req.body;
-  
-    // Access the uploaded file
-    const file = req.file;
-    if (!file) {
-      return res.status(400).json({ error: 'Image file is required.' });
-    }
-  
-    const imageUrl = (file as Express.MulterS3.File).location;
-      
-    try {
-      // Start a transaction
-      await pool.query('BEGIN');
-  
-      // Insert into weather_data
-      const insertWeatherText = `
+  const {
+    temperature_c,
+    temperature_f,
+    humidity,
+    air_pressure,
+    wind_speed,
+    wind_direction,
+    timestamp,
+    pressure,
+    ambientWeatherBatteryOk,
+    ambientWeatherTemp,
+    ambientWeatherHumidity,
+    ambientWeatherWindDirection,
+    ambientWeatherWindSpeed,
+    ambientWeatherWindMaxSpeed,
+    ambientWeatherRain,
+    ambientWeatherUV,
+    ambientWeatherUVI,
+    ambientWeatherLightLux,
+  } = req.body;
+
+  // Access the uploaded file
+  const file = req.file;
+  if (!file) {
+    return res.status(400).json({ error: 'Image file is required.' });
+  }
+
+  const imageUrl = (file as Express.MulterS3.File).location;
+
+  try {
+    // Start a transaction
+    await pool.query('BEGIN');
+
+    // Insert into weather_data
+    const insertWeatherText = `
         INSERT INTO weather_data (
           temperature_c,
           temperature_f,
@@ -62,53 +62,53 @@ export const insertWeatherDataWithImage = async (req: Request, res: Response): P
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
         RETURNING id
       `;
-      const insertWeatherValues = [
-        temperature_c,
-        temperature_f,
-        humidity,
-        air_pressure,
-        wind_speed,
-        wind_direction,
-        timestamp,
-        pressure,
-        ambientWeatherBatteryOk,
-        ambientWeatherTemp,
-        ambientWeatherHumidity,
-        ambientWeatherWindDirection,
-        ambientWeatherWindSpeed,
-        ambientWeatherWindMaxSpeed,
-        ambientWeatherRain,
-        ambientWeatherUV,
-        ambientWeatherUVI,
-        ambientWeatherLightLux,
-      ];
-  
-      const weatherResult = await pool.query(insertWeatherText, insertWeatherValues);
-      const weatherDataId = weatherResult.rows[0].id;
-  
-      // Insert into weather_images
-      const insertImageText = `
+    const insertWeatherValues = [
+      temperature_c,
+      temperature_f,
+      humidity,
+      air_pressure,
+      wind_speed,
+      wind_direction,
+      timestamp,
+      pressure,
+      ambientWeatherBatteryOk,
+      ambientWeatherTemp,
+      ambientWeatherHumidity,
+      ambientWeatherWindDirection,
+      ambientWeatherWindSpeed,
+      ambientWeatherWindMaxSpeed,
+      ambientWeatherRain,
+      ambientWeatherUV,
+      ambientWeatherUVI,
+      ambientWeatherLightLux,
+    ];
+
+    const weatherResult = await pool.query(insertWeatherText, insertWeatherValues);
+    const weatherDataId = weatherResult.rows[0].id;
+
+    // Insert into weather_images
+    const insertImageText = `
         INSERT INTO weather_images (weather_data_id, image_url)
         VALUES ($1, $2)
         ON CONFLICT (weather_data_id) DO UPDATE SET image_url = EXCLUDED.image_url, timestamp = NOW()
       `;
-      const insertImageValues = [weatherDataId, imageUrl];
-      await pool.query(insertImageText, insertImageValues);
-  
-      // Commit the transaction
-      await pool.query('COMMIT');
-  
-      return res.status(201).json({
-        message: 'Weather data and image uploaded successfully.',
-        weather_data_id: weatherDataId, // Return the ID for image association
-      });
-    } catch (error) {
-      // Rollback the transaction in case of error
-      await pool.query('ROLLBACK');
-      console.error('Error inserting weather data and image:', error);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-  };
+    const insertImageValues = [weatherDataId, imageUrl];
+    await pool.query(insertImageText, insertImageValues);
+
+    // Commit the transaction
+    await pool.query('COMMIT');
+
+    return res.status(201).json({
+      message: 'Weather data and image uploaded successfully.',
+      weather_data_id: weatherDataId, // Return the ID for image association
+    });
+  } catch (error) {
+    // Rollback the transaction in case of error
+    await pool.query('ROLLBACK');
+    console.error('Error inserting weather data and image:', error);
+    return res.status(500).json({ error: ' Server Error' });
+  }
+};
 
 // Handler to get the latest live data with image
 export const getLiveData = async (req: Request, res: Response): Promise<Response> => {
@@ -127,7 +127,7 @@ export const getLiveData = async (req: Request, res: Response): Promise<Response
     return res.json(result.rows[0]);
   } catch (error) {
     console.error('Error fetching live data:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error, getlive' });
   }
 };
 
@@ -151,7 +151,7 @@ export const getHistoricalData = async (req: Request, res: Response): Promise<Re
     return res.json(result.rows);
   } catch (error) {
     console.error('Error fetching historical data:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error, gethistory' });
   }
 };
 
@@ -204,7 +204,7 @@ export const exportDataToCSV = async (req: Request, res: Response): Promise<Resp
     return res.send(csv);
   } catch (error) {
     console.error('Error exporting data to CSV:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error, export' });
   }
 };
 
