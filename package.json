@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/Eanazir/SolarTrackerWebApp#readme",
   "devDependencies": {
-    "@types/react-plotly.js": "^2.6.3"
+    "@types/react-plotly.js": "^2.6.3",
+    "tsc-alias": "^1.8.10"
   }
 }

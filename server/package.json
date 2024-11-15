@@ -7,8 +7,13 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev" : "nodemon --watch 'src/**/*.ts' --exec 'tsx' src/index.ts",
-    "start": "tsx src/index.ts",
-    "build": "tsc"
+    "start": "node dist/index.js",
+    "build": "tsc && tsc-alias",
+    "deploy": "pm2 start dist/index.js --name 'solartracker-backend'",
+    "stop": "pm2 stop solartracker-backend",
+    "restart": "pm2 restart solartracker-backend",
+    "delete": "pm2 delete solartracker-backend",
+    "logs": "pm2 logs solartracker-backend"
   },
   "keywords": [],
   "author": "",

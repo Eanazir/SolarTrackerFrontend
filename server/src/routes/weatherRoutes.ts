@@ -5,8 +5,8 @@ import {
   getLiveData,
   getHistoricalData,
   exportDataToCSV,
-} from '../controllers/weatherController';
-import upload from '../middleware/upload';
+} from '../controllers/weatherController.js';
+import upload from '../middleware/upload.js';
 
 const router: Router = express.Router();
 
