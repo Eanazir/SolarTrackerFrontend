@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-do
 import LiveDashboard from './pages/LiveDashboard';
 import History from './pages/History';
 import ExportData from './pages/ExportData';
+import Forecasting from './pages/Forecasting';
 
 const App: React.FC = () => {
   return (
@@ -40,11 +41,22 @@ const App: React.FC = () => {
         >
           Export
         </NavLink>
+        <NavLink
+          to="/forecasting"
+          className={({ isActive }) =>
+            isActive
+              ? "font-extrabold bg-blue-800 p-2 rounded transition duration-300"
+              : "font-bold p-2 rounded transition duration-300"
+          }
+        >
+          Forecasting
+        </NavLink>
       </nav>
       <Routes>
         <Route path="/" element={<LiveDashboard />} />
         <Route path="/history" element={<History />} />
         <Route path="/export" element = {<ExportData/>} />
+        <Route path="/forecasting" element = {<Forecasting/>} />
         {/* <Route path="/history" element={<History />} />
         <Route path="/export" element={<ExportData />} /> */}
       </Routes>

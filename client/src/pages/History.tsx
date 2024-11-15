@@ -110,9 +110,9 @@ const History: React.FC = () => {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Historical Data</h1>
+      <h1 className="text-2xl font-bold mb-4 text-center">Historical Data</h1>
       
-      <form onSubmit={handleSubmit} className="mb-8 space-y-4">
+      <form onSubmit={handleSubmit} className="mb-8 flex flex-col items-center">
         <div className="flex gap-4">
           <div>
             <label htmlFor="startDate" className="block mb-2">Start Date:</label>
@@ -158,6 +158,7 @@ const History: React.FC = () => {
               dataKey="value"
               unit="°C"
               strokeColor="#FF4500"
+              tickFormat='daily'
             />
           </div>
           <div>
@@ -167,6 +168,7 @@ const History: React.FC = () => {
               dataKey="value"
               unit="%"
               strokeColor="#1E90FF"
+              tickFormat='daily'
             />
           </div>
           <div>
@@ -176,6 +178,7 @@ const History: React.FC = () => {
               dataKey="value"
               unit=" hPa"
               strokeColor="#32CD32"
+              tickFormat='daily'
             />
           </div>
         </div>

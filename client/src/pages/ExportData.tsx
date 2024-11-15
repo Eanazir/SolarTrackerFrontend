@@ -52,7 +52,8 @@ const ExportData: React.FC = () => {
     ].join('\n');
   };
 
-  const handleExport = () => {
+  const handleExport = (e: React.FormEvent) => {
+    e.preventDefault();
     try {
       setError('');
       const start = new Date(startDate);
@@ -94,9 +95,9 @@ const ExportData: React.FC = () => {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Export Weather Data</h1>
+      <h1 className="text-2xl font-bold mb-4 text-center">Export Weather Data</h1>
       
-      <div className="space-y-4">
+      <form onSubmit={handleExport} className="mb-8 flex flex-col items-center">
         <div className="flex gap-4">
           <div>
             <label htmlFor="startDate" className="block mb-2">Start Date:</label>
@@ -121,20 +122,19 @@ const ExportData: React.FC = () => {
               required
             />
           </div>
+          <button 
+            type="submit"
+            className="bg-blue-500 text-white px-4 py-2 rounded self-end hover:bg-blue-600"
+            disabled={!startDate || !endDate}
+          >
+            Export to CSV
+          </button>
         </div>
+      </form>
 
-        {error && (
-          <div className="text-red-500">{error}</div>
-        )}
-
-        <button
-          onClick={handleExport}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          disabled={!startDate || !endDate}
-        >
-          Export to CSV
-        </button>
-      </div>
+      {error && (
+        <div className="text-red-500 text-center mb-4">{error}</div>
+      )}
     </div>
   );
 };
