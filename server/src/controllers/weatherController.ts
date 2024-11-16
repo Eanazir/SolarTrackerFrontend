@@ -8,7 +8,7 @@ export const insertWeatherDataWithImage = async (req: Request, res: Response): P
   const {
     temperature_c,
     temperature_f,
-    humidi
+    humidity,
     wind_speed,
     wind_direction,
     timestamp,
@@ -63,7 +63,7 @@ export const insertWeatherDataWithImage = async (req: Request, res: Response): P
     const insertWeatherValues = [
       temperature_c,
       temperature_f,
-      humidit
+      humidity,
       wind_speed,
       wind_direction,
       timestamp,
@@ -176,7 +176,6 @@ export const exportDataToCSV = async (req: Request, res: Response): Promise<Resp
       'temperature_c',
       'temperature_f',
       'humidity',
-      'air_pressure',
       'wind_speed',
       'wind_direction',
       'timestamp',
