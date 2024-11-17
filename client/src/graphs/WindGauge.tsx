@@ -14,7 +14,8 @@ const WindGauge: React.FC<WindGaugeProps> = ({ speed, direction }) => {
     const animate = () => {
       setSmoothDirection((prev) => {
         const diff = direction - prev;
-        const adjustedDiff = diff > 180 ? diff - 360 : diff < -180 ? diff + 360 : diff;
+        const adjustedDiff =
+          diff > 180 ? diff - 360 : diff < -180 ? diff + 360 : diff;
         return prev + adjustedDiff * 0.1;
       });
 
@@ -29,9 +30,9 @@ const WindGauge: React.FC<WindGaugeProps> = ({ speed, direction }) => {
   }, [direction, speed]);
 
   return (
-    <div className="flex flex-row space-x-6 justify-center">
+    <div className="flex flex-wrap justify-center">
       {/* Wind Speed Gauge */}
-      <div className="bg-white shadow-md rounded p-6 flex flex-col items-center">
+      <div className="bg-white shadow-md rounded p-6 flex flex-col items-center m-2 w-full sm:w-auto">
         <h2 className="text-xl font-bold mb-4">Wind Speed (km/h)</h2>
         <Plot
           data={[
@@ -58,7 +59,7 @@ const WindGauge: React.FC<WindGaugeProps> = ({ speed, direction }) => {
       </div>
 
       {/* Wind Direction Gauge */}
-      <div className="bg-white shadow-md rounded p-6 flex flex-col items-center">
+      <div className="bg-white shadow-md rounded p-6 flex flex-col items-center m-2 w-full sm:w-auto">
         <h2 className="text-xl font-bold mb-4">Wind Direction</h2>
         <Plot
           data={[
@@ -76,18 +77,17 @@ const WindGauge: React.FC<WindGaugeProps> = ({ speed, direction }) => {
               radialaxis: { visible: false },
               angularaxis: {
                 direction: 'clockwise',
-                tickfont: { size: 14 }, // Adjust font size for better readability
+                tickfont: { size: 14 },
               },
             },
             showlegend: false,
-            width: 300, // Slightly increase width for better spacing
-            height: 280, // Slightly increase height for better spacing
-            margin: { t: 20, b: 20, l: 50, r: 40 }, // Add more margin to prevent cutoff
+            width: 300,
+            height: 280,
+            margin: { t: 20, b: 20, l: 50, r: 40 },
             paper_bgcolor: 'white',
           }}
         />
       </div>
-
     </div>
   );
 };
