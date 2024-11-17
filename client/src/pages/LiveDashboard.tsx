@@ -176,10 +176,16 @@ const LiveDashboard: React.FC = () => {
             <div className="bg-white rounded-lg shadow p-4">
               <WindGauge speed={data.wind_speed} direction={data.wind_direction} />
             </div>
+
+
+            
             <div className="bg-white rounded-lg shadow p-4 flex flex-row justify-between space-x-6 items-center">
               <ThermometerChart temperature={data.temperature_c} unit="C" />
               <ThermometerChart temperature={data.temperature_f} unit="F" />
             </div>
+
+
+
             <div className="bg-white shadow-md rounded p-4 flex flex-col items-center">
               <h2 className="text-xl font-bold mb-4 text-center">Live Image</h2>
               {data.image_url ? (
