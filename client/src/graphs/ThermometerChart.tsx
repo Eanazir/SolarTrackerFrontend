@@ -16,7 +16,10 @@ const ThermometerChart: React.FC<ThermometerChartProps> = ({
   const defaultMaxTemp = unit === 'F' ? 122 : 50;
 
   const normalizedValue = Math.min(
-    Math.max(((temperature - defaultMinTemp) / (defaultMaxTemp - defaultMinTemp)) * 100, 0),
+    Math.max(
+      ((temperature - defaultMinTemp) / (defaultMaxTemp - defaultMinTemp)) * 100,
+      0
+    ),
     100
   );
 
@@ -48,26 +51,30 @@ const ThermometerChart: React.FC<ThermometerChartProps> = ({
   return (
     <div className="bg-white shadow-md rounded p-6 w-full flex flex-col items-center">
       <h2 className="text-xl font-bold mb-4">Temperature Gauge (°{unit})</h2>
-      <div className="relative w-[300px] flex flex-col items-center">
-        <PieChart width={300} height={190}>
-          <Pie
-            data={data}
-            cx={150}
-            cy={150}
-            startAngle={180}
-            endAngle={0}
-            innerRadius={35}
-            outerRadius={120}
-            dataKey="value"
-          >
-            <Cell fill={getTemperatureColor(temperature, unit)} />
-            <Cell fill="#e0e0e0" />
-          </Pie>
-        </PieChart>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 translate-y-[-25%] text-center">
-          <span className="text-3xl font-bold">
-            {temperature.toFixed(2)}°{unit}
-          </span>
+      <div className="relative w-full max-w-[300px] flex flex-col items-center">
+        <div className="w-full" style={{ position: 'relative', paddingBottom: '63.33%' }}>
+          <div style={{ position: 'absolute', width: '100%', height: '100%', top: 0, left: 0 }}>
+            <PieChart width={300} height={190}>
+              <Pie
+                data={data}
+                cx={150}
+                cy={150}
+                startAngle={180}
+                endAngle={0}
+                innerRadius={35}
+                outerRadius={120}
+                dataKey="value"
+              >
+                <Cell fill={getTemperatureColor(temperature, unit)} />
+                <Cell fill="#e0e0e0" />
+              </Pie>
+            </PieChart>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 translate-y-[-25%] text-center">
+              <span className="text-3xl font-bold">
+                {temperature.toFixed(2)}°{unit}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
