@@ -94,9 +94,16 @@ const ExportData: React.FC = () => {
 
   return (
     <div className="p-4 bg-gray-50 dark:bg-gray-900 min-h-screen w-full transition-colors duration-300 flex flex-col">
-      <h1 className="text-2xl font-bold mb-4 text-center text-gray-800 dark:text-gray-100">
-        Export Weather Data
-      </h1>
+      <header className="mb-8 pt-10">
+          <h1
+            className={`text-4xl font-bold text-center mb-2 text-gray-800 dark:text-gray-100`}
+          >
+            Export Weather Data
+          </h1>
+          <p className={`text-center text-gray-600 dark:text-gray-300`}>
+            Export historical weather data
+          </p>
+        </header>
 
       <form onSubmit={handleExport} className="mb-8 flex flex-col items-center">
         <div className="flex gap-4">
