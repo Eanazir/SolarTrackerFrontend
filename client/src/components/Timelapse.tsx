@@ -8,16 +8,17 @@ interface TimelapseProps {
 const Timelapse: React.FC<TimelapseProps> = ({ images, interval = 1500 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [speedMultiplier, setSpeedMultiplier] = useState(1);
 
   useEffect(() => {
     if (images.length === 0 || !isPlaying) return;
 
     const timer = setInterval(() => {
       setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
-    }, interval);
+    }, interval / speedMultiplier);
 
     return () => clearInterval(timer);
-  }, [images, interval, isPlaying]);
+  }, [images, interval, isPlaying, speedMultiplier]);
 
   const handlePlayPause = () => {
     setIsPlaying((prev) => !prev);
@@ -27,14 +28,18 @@ const Timelapse: React.FC<TimelapseProps> = ({ images, interval = 1500 }) => {
     setCurrentImageIndex(Number(event.target.value));
   };
 
+  const handleSpeedChange = (multiplier: number) => {
+    setSpeedMultiplier(multiplier);
+  };
+
   if (images.length === 0) {
     return <div className="text-gray-500">No images available for timelapse.</div>;
   }
 
   return (
-    <div className="flex flex-col items-center ">
+    <div className="flex flex-col items-center">
       {/* Image Display */}
-      <div className="w-full max-w-2xl ">
+      <div className="w-full max-w-2xl">
         <img
           src={images[currentImageIndex]}
           alt={`Timelapse ${currentImageIndex + 1}`}
@@ -47,14 +52,33 @@ const Timelapse: React.FC<TimelapseProps> = ({ images, interval = 1500 }) => {
       </div>
 
       {/* Controls */}
-      <div className="mt-4 w-full max-w-2xl flex items-center justify-between ">
-        {/* Play/Pause Button */}
-        <button
-          className="bg-blue-500 text-white px-4 py-2 rounded shadow hover:bg-blue-600"
-          onClick={handlePlayPause}
-        >
-          {isPlaying ? 'Pause' : 'Play'}
-        </button>
+      <div className="mt-4 w-full max-w-2xl flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {/* Play/Pause Button */}
+          <button
+            className="bg-blue-500 text-white px-4 py-2 rounded shadow hover:bg-blue-600"
+            onClick={handlePlayPause}
+          >
+            {isPlaying ? 'Pause' : 'Play'}
+          </button>
+
+          {/* Speed Controls */}
+          <div className="flex gap-1">
+            {[1, 2, 4, 8].map((speed) => (
+              <button
+                key={speed}
+                onClick={() => handleSpeedChange(speed)}
+                className={`px-2 py-1 rounded ${
+                  speedMultiplier === speed
+                    ? 'bg-gray-600 text-white'
+                    : 'bg-gray-200 hover:bg-gray-300'
+                }`}
+              >
+                {speed}x
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Slider for Manual Navigation */}
         <input
