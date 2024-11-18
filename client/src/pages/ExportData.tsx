@@ -1,4 +1,3 @@
-// src/components/ExportData.tsx
 import React, { useState } from 'react';
 
 interface WeatherData {
@@ -94,37 +93,43 @@ const ExportData: React.FC = () => {
   };
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4 text-center">Export Weather Data</h1>
-      
+    <div className="p-4 bg-gray-50 dark:bg-gray-900 min-h-screen w-full transition-colors duration-300 flex flex-col">
+      <h1 className="text-2xl font-bold mb-4 text-center text-gray-800 dark:text-gray-100">
+        Export Weather Data
+      </h1>
+
       <form onSubmit={handleExport} className="mb-8 flex flex-col items-center">
         <div className="flex gap-4">
           <div>
-            <label htmlFor="startDate" className="block mb-2">Start Date:</label>
+            <label htmlFor="startDate" className="block mb-2 text-gray-600 dark:text-gray-100">
+              Start Date:
+            </label>
             <input
               type="date"
               id="startDate"
               value={startDate}
               min={EARLIEST_DATE.toISOString().split('T')[0]}
               onChange={(e) => setStartDate(e.target.value)}
-              className="border p-2 rounded"
+              className="border p-2 rounded bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 transition-colors duration-300"
               required
             />
           </div>
           <div>
-            <label htmlFor="endDate" className="block mb-2">End Date:</label>
+            <label htmlFor="endDate" className="block mb-2 text-gray-600 dark:text-gray-100">
+              End Date:
+            </label>
             <input
               type="date"
               id="endDate"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="border p-2 rounded"
+              className="border p-2 rounded bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 transition-colors duration-300"
               required
             />
           </div>
-          <button 
+          <button
             type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded self-end hover:bg-blue-600"
+            className="bg-blue-500 text-white px-4 py-2 rounded self-end hover:bg-blue-600 mt-4 sm:mt-0"
             disabled={!startDate || !endDate}
           >
             Export to CSV
@@ -133,7 +138,7 @@ const ExportData: React.FC = () => {
       </form>
 
       {error && (
-        <div className="text-red-500 text-center mb-4">{error}</div>
+        <div className="text-red-500 dark:text-red-400 text-center mb-4">{error}</div>
       )}
     </div>
   );
