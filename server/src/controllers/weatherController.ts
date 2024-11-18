@@ -128,12 +128,39 @@ export const getLiveData = async (req: Request, res: Response): Promise<Response
   }
 };
 
-// Handler to get historical data based on date
-export const getHistoricalData = async (req: Request, res: Response): Promise<Response> => {
-  const { date } = req.query;
 
-  if (!date || typeof date !== 'string') {
-    return res.status(400).json({ error: 'Date query parameter is required in YYYY-MM-DD format.' });
+// Handler to get historical data based on start and end dates
+export const getHistoricalData = async (req: Request, res: Response): Promise<Response> => {
+  const { startDate, endDate } = req.query;
+
+  // Validate presence of both query parameters
+  if (!startDate || !endDate) {
+    return res.status(400).json({ error: 'Both startDate and endDate query parameters are required in YYYY-MM-DD format.' });
+  }
+
+  // Validate that both parameters are strings
+  if (typeof startDate !== 'string' || typeof endDate !== 'string') {
+    return res.status(400).json({ error: 'startDate and endDate must be strings in YYYY-MM-DD format.' });
+  }
+
+  // Validate date formats using regex (simple validation)
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
+    return res.status(400).json({ error: 'startDate and endDate must be in YYYY-MM-DD format.' });
+  }
+
+  // Convert to Date objects to compare
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  // Check for invalid dates
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    return res.status(400).json({ error: 'Invalid startDate or endDate.' });
+  }
+
+  // Ensure startDate is not after endDate
+  if (start > end) {
+    return res.status(400).json({ error: 'startDate cannot be after endDate.' });
   }
 
   try {
@@ -141,14 +168,19 @@ export const getHistoricalData = async (req: Request, res: Response): Promise<Re
       SELECT wd.*, wi.image_url
       FROM weather_data wd
       LEFT JOIN weather_images wi ON wd.id = wi.weather_data_id
-      WHERE DATE(wd.timestamp) = $1
+      WHERE DATE(wd.timestamp) BETWEEN $1 AND $2
       ORDER BY wd.timestamp ASC
     `;
-    const result = await pool.query(queryText, [date]);
+    const result = await pool.query(queryText, [startDate, endDate]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'No data found for the specified date range.' });
+    }
+
     return res.json(result.rows);
   } catch (error) {
     console.error('Error fetching historical data:', error);
-    return res.status(500).json({ error: 'Internal Server Error, gethistory' });
+    return res.status(500).json({ error: 'Internal Server Error, getHistoricalData' });
   }
 };
 
