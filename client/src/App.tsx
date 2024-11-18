@@ -3,6 +3,9 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
 import LiveDashboard from './pages/LiveDashboard';
 import DarkModeToggle from './components/DarkModeToggle';
+import History from './pages/History';
+import ExportData from './pages/ExportData';
+import Forecasting from './pages/Forecasting';
 
 const App: React.FC = () => {
   return (
@@ -45,8 +48,11 @@ const App: React.FC = () => {
       </nav>
       <Routes>
         <Route path="/" element={<LiveDashboard />} />
-        {/* <Route path="/history" element={<History />} />
-        <Route path="/export" element={<ExportData />} /> */}
+        <Route path="/history" element={<History />} />
+        <Route path="/export" element = {<ExportData/>} />
+        <Route path="/forecasting" element = {<Forecasting/>} />
+        <Route path="/history" element={<History />} />
+        <Route path="/export" element={<ExportData />} />
       </Routes>
     </Router>
   );

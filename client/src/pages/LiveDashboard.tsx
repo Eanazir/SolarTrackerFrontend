@@ -162,25 +162,25 @@ const LiveDashboard: React.FC = () => {
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
-              <CustomLineChart title="Temperature (°C)" data={temperatureData} dataKey="value" unit=" °C" strokeColor="#FF4500" yAxisLabel="Temperature (°C)" dy={50} />
+              <CustomLineChart title="Temperature (°C)" data={temperatureData} dataKey="value" unit=" °C" strokeColor="#FF4500" tickFormat='hourly' yAxisLabel="Temperature (°C)" dy={50} />
             </div>
             <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
-              <CustomLineChart title="Humidity (%)" data={humidityData} dataKey="value" unit=" %" strokeColor="#1E90FF" yAxisLabel="Humidity (%)" dy={40} />
+              <CustomLineChart title="Humidity (%)" data={humidityData} dataKey="value" unit=" %" strokeColor="#1E90FF" tickFormat='hourly' yAxisLabel="Humidity (%)" dy={40} />
             </div>
             <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
-              <CustomLineChart title="Air Pressure (hPa)" data={airPressureData} dataKey="value" unit=" hpa" strokeColor="#32CD32" yAxisLabel="Pressure (hPa)" dy={40} dx={-15} />
+              <CustomLineChart title="Air Pressure (hPa)" data={airPressureData} dataKey="value" unit=" hpa" strokeColor="#32CD32" tickFormat='hourly' yAxisLabel="Pressure (hPa)" dy={40} dx={-15} />
             </div>
             <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
-              <CustomLineChart title="Wind Max Speed (km/h)" data={windMaxSpeedData} dataKey="value" unit=" km/h" strokeColor="#FFD700" yAxisLabel="Wind Max Speed (km/h)" dy={70} dx={-5} />
+              <CustomLineChart title="Wind Max Speed (km/h)" data={windMaxSpeedData} dataKey="value" unit=" km/h" strokeColor="#FFD700" tickFormat='hourly' yAxisLabel="Wind Max Speed (km/h)" dy={70} dx={-5} />
             </div>
             <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
-              <CustomLineChart title="Rain (mm)" data={rainData} dataKey="value" unit=" mm" strokeColor="#4682B4" yAxisLabel="Rain (mm)" dy={20}/>
+              <CustomLineChart title="Rain (mm)" data={rainData} dataKey="value" unit=" mm" strokeColor="#4682B4" tickFormat='hourly' yAxisLabel="Rain (mm)" dy={20}/>
             </div>
             <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
-              <CustomLineChart title="UV Index" data={uvData} dataKey="value" strokeColor="#FFA07A" yAxisLabel="UV Index" dy={20} dx={10} />
+              <CustomLineChart title="UV Index" data={uvData} dataKey="value" strokeColor="#FFA07A" tickFormat='hourly' yAxisLabel="UV Index" dy={20} dx={10} />
             </div>
             <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
-              <CustomLineChart title="Light Lux (lx)" data={lightLuxData} dataKey="value" unit=" lx" strokeColor="#8A2BE2" yAxisLabel="Light Lux (lx)" dy={40} />
+              <CustomLineChart title="Light Lux (lx)" data={lightLuxData} dataKey="value" unit=" lx" strokeColor="#8A2BE2" tickFormat='hourly' yAxisLabel="Light Lux (lx)" dy={40} />
             </div>
             <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
               <WindGauge speed={data.wind_speed} direction={data.wind_direction} />
