@@ -24,6 +24,7 @@ interface CustomLineChartProps {
   yAxisLabel?: string;
   dy?: number;
   dx?: number;
+  tickFormat: 'hourly'  | 'daily'; 
 }
 
 const CustomLineChart: React.FC<CustomLineChartProps> = ({
@@ -35,6 +36,7 @@ const CustomLineChart: React.FC<CustomLineChartProps> = ({
   yAxisLabel,
   dy = 0,
   dx = 0,
+  tickFormat
 }) => {
   const [isDarkMode, setIsDarkMode] = useState(
     document.documentElement.classList.contains('dark')
@@ -70,8 +72,17 @@ const CustomLineChart: React.FC<CustomLineChartProps> = ({
             scale="time"
             tickFormatter={(tick) => {
               const date = new Date(tick);
-              return `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
+              return tickFormat === 'hourly'
+                ? `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`
+                : date.toLocaleDateString();
             }}
+            // tickFormatter={(tick) => {
+            //   const date = new Date(tick);
+            //   return `${date.getHours()}:${date
+            //     .getMinutes()
+            //     .toString()
+            //     .padStart(2, '0')}`;
+            // }}
             minTickGap={20}
             allowDataOverflow={false}
             stroke={axisColor}
