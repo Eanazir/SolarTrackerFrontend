@@ -12,6 +12,8 @@
     "clean": "rimraf dist build"
   },
   "dependencies": {
+    "@types/axios": "^0.14.4",
+    "axios": "^1.7.7",
     "browserify-css": "^0.15.0",
     "chart.js": "^4.4.6",
     "client": "file:",

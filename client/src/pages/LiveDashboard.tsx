@@ -5,7 +5,6 @@ import ThermometerChart from '../graphs/ThermometerChart';
 import WindGauge from '../graphs/WindGauge';
 import Timelapse from '../components/Timelapse';
 import axios from 'axios';
-import moment from 'moment-timezone';
 
 interface LiveData {
   temperature_c: number;
@@ -425,7 +424,7 @@ const LiveDashboard: React.FC = () => {
               </div>
             ) : (
               <div className="bg-white p-2 rounded-md shadow dark:bg-gray-800 transition-colors duration-300">
-                <Timelapse images={imageUrls} interval={750} />
+                <Timelapse images={imageUrls} interval={500} />
               </div>
             )}
           </div>
