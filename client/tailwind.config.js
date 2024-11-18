@@ -1,5 +1,5 @@
 // client/tailwind.config.js
-export default {
+module.exports = {
   content: [
     './index.html',
     './src/**/*.{js,ts,jsx,tsx}',
@@ -7,5 +7,6 @@ export default {
   theme: {
     extend: {},
   },
+  darkMode: 'class', // Enable dark mode using a CSS class
   plugins: [],
-}
+};
