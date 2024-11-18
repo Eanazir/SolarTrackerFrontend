@@ -1,81 +1,38 @@
 // src/pages/History.tsx
 import React, { useState, useEffect } from 'react';
 import CustomLineChart from '../graphs/CustomLineChart';
-import ThermometerChart from '../graphs/ThermometerChart';
-import WindGauge from '../graphs/WindGauge';
 
-const EARLIEST_DATE = new Date('2023-01-01');
-
-interface HistoricalData {
-  temperature_c: number;
-  temperature_f: number;
-  humidity: number;
-  pressure: number;
-  wind_speed: number;
-  wind_direction: number;
-  wind_max_speed: number;
-  rain: number;
-  uv: number;
-  uvi: number;
-  light_lux: number;
-  timestamp: string;
-}
+const EARLIEST_DATE = new Date('2024-11-15');
+const CST_OFFSET = -6 * 60; // CST is UTC-6 in minutes
 
 interface DataPoint {
   time: number;
   value: number;
 }
 
-const generateRandomDataPoint = (date: Date): HistoricalData => {
-  return {
-    temperature_c: Math.random() * 30,
-    temperature_f: (Math.random() * 30) * 1.8 + 32,
-    humidity: Math.random() * 100,
-    pressure: 950 + Math.random() * 100,
-    wind_speed: Math.random() * 15,
-    wind_direction: Math.random() * 360,
-    wind_max_speed: Math.random() * 20,
-    rain: Math.random() * 10,
-    uv: Math.random() * 11,
-    uvi: Math.random() * 11,
-    light_lux: Math.random() * 100000,
-    timestamp: date.toISOString(),
-  };
-};
-
-const generateHistoricalData = (startDate: Date, endDate: Date): HistoricalData[] => {
-  const data: HistoricalData[] = [];
-  const currentDate = new Date(startDate);
-
-  while (currentDate <= endDate) {
-    for (let i = 0; i < 10; i++) {
-      const pointDate = new Date(currentDate);
-      pointDate.setHours(Math.floor(i * 2.4));
-      data.push(generateRandomDataPoint(pointDate));
-    }
-    currentDate.setDate(currentDate.getDate() + 1);
-  }
-
-  return data;
-};
-
 const History: React.FC = () => {
   const [startDate, setStartDate] = useState<string>(() => {
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
-    // Adjust for local timezone
-    weekAgo.setMinutes(weekAgo.getMinutes() + weekAgo.getTimezoneOffset());
-    return weekAgo.toLocaleDateString('en-CA'); // Format as YYYY-MM-DD in local timezone
+
+    // Convert to CST
+    const cstDate = new Date(weekAgo.getTime() + CST_OFFSET * 60 * 1000);
+
+    // Make sure we don't go before EARLIEST_DATE
+    const minDate = new Date(Math.max(EARLIEST_DATE.getTime(), cstDate.getTime()));
+
+    return minDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
   });
 
   const [endDate, setEndDate] = useState<string>(() => {
     const today = new Date();
-    // Adjust for local timezone
-    today.setMinutes(today.getMinutes() + today.getTimezoneOffset());
-    return today.toLocaleDateString('en-CA'); // Format as YYYY-MM-DD in local timezone
+    // Convert to CST
+    const cstDate = new Date(today.getTime() + CST_OFFSET * 60 * 1000);
+    return cstDate.toISOString().split('T')[0];
   });
 
   const [error, setError] = useState<string>('');
+  const [isSameDay, setIsSameDay] = useState<boolean>(false);
   const [historicalData, setHistoricalData] = useState<{
     temperature: DataPoint[];
     humidity: DataPoint[];
@@ -120,6 +77,11 @@ const History: React.FC = () => {
     const end = new Date(endDate);
     const today = new Date();
 
+    // Check if same day selected
+    const isSameDay = start.toISOString().split('T')[0] === end.toISOString().split('T')[0];
+    setIsSameDay(isSameDay);
+
+    // Validation checks
     if (start < EARLIEST_DATE) {
       setError('Start date cannot be earlier than ' + EARLIEST_DATE.toDateString());
       return;
@@ -128,68 +90,94 @@ const History: React.FC = () => {
       setError('End date cannot be in the future');
       return;
     }
-
     if (start > end) {
       setError('Start date must be before end date');
       return;
     }
 
     try {
-      const data = generateHistoricalData(start, end);
+      // Format dates for API
+      const formattedStartDate = start.toISOString().split('T')[0];
+      const formattedEndDate = end.toISOString().split('T')[0];
 
+      const response = await fetch(
+        `http://sunsightenergy.com/api/history-data?startDate=${formattedStartDate}&endDate=${formattedEndDate}`
+      );
+
+      if (!response.ok) {
+        // throw new Error('Failed to fetch data, could be that no data found for the selected date range.');
+        setError('Failed to fetch data, could be that no data found for the selected date range.');
+        return;
+      }
+
+      const data = await response.json();
+
+      // Add this check for empty data
+      if (data.length === 0) {
+        setError('No data found for the selected date range.');
+        return;
+      }
+
+      // Transform API data to match component state structure
       const transformedData = {
-        temperature: data.map((d) => ({
-          time: new Date(d.timestamp).getTime(),
-          value: d.temperature_c,
+        temperature: data.map((d: any) => ({
+          time: new Date(d.timestamp.slice(0,-1)).getTime(),
+          value: parseFloat(d.temperature_c.toFixed(2)),
         })),
-        humidity: data.map((d) => ({
-          time: new Date(d.timestamp).getTime(),
-          value: d.humidity,
+        humidity: data.map((d: any) => ({
+          time: new Date(d.timestamp.slice(0,-1)).getTime(),
+          value: parseFloat(d.humidity.toFixed(2)),
         })),
-        pressure: data.map((d) => ({
-          time: new Date(d.timestamp).getTime(),
-          value: d.pressure,
+        pressure: data.map((d: any) => ({
+          time: new Date(d.timestamp.slice(0,-1)).getTime(),
+          value: parseFloat(d.pressure.toFixed(2)),
         })),
-        windMaxSpeed: data.map((d) => ({
-          time: new Date(d.timestamp).getTime(),
-          value: d.wind_max_speed,
+        windMaxSpeed: data.map((d: any) => ({
+          time: new Date(d.timestamp.slice(0,-1)).getTime(),
+          value: parseFloat(d.ambientweatherwindmaxspeed.toFixed(2)),
         })),
-        rain: data.map((d) => ({
-          time: new Date(d.timestamp).getTime(),
-          value: d.rain,
+        rain: data.map((d: any) => ({
+          time: new Date(d.timestamp.slice(0,-1)).getTime(),
+          value: parseFloat(d.ambientweatherrain.toFixed(2)),
         })),
-        uv: data.map((d) => ({
-          time: new Date(d.timestamp).getTime(),
-          value: d.uv,
+        uv: data.map((d: any) => ({
+          time: new Date(d.timestamp.slice(0,-1)).getTime(),
+          value: parseFloat(d.ambientweatheruv.toFixed(2)),
         })),
-        uvi: data.map((d) => ({
-          time: new Date(d.timestamp).getTime(),
-          value: d.uvi,
+        uvi: data.map((d: any) => ({
+          time: new Date(d.timestamp.slice(0,-1)).getTime(),
+          value: parseFloat(d.ambientweatheruvi.toFixed(2)),
         })),
-        lightLux: data.map((d) => ({
-          time: new Date(d.timestamp).getTime(),
-          value: d.light_lux,
+        lightLux: data.map((d: any) => ({
+          time: new Date(d.timestamp.slice(0,-1)).getTime(),
+          value: parseFloat(d.ambientweatherlightlux.toFixed(2)),
         })),
-        windSpeed: data[data.length - 1].wind_speed,
-        windDirection: data[data.length - 1].wind_direction,
-        temperatureC: data[data.length - 1].temperature_c,
-        temperatureF: data[data.length - 1].temperature_f,
+        // Use the latest values for gauges
+        windSpeed: parseFloat(data[data.length - 1].wind_speed.toFixed(2)),
+        windDirection: parseFloat(data[data.length - 1].wind_direction.toFixed(2)),
+        temperatureC: parseFloat(data[data.length - 1].temperature_c.toFixed(2)),
+        temperatureF: parseFloat(data[data.length - 1].temperature_f.toFixed(2)),
       };
 
       setHistoricalData(transformedData);
     } catch (err) {
-      setError('Failed to generate historical data');
+      setError('Failed to fetch historical data');
       console.error(err);
     }
   };
 
-  const datePickerClasses = "border p-2 rounded bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 transition-colors duration-300";
+  const datePickerClasses =
+    'border p-2 rounded bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 transition-colors duration-300';
 
   return (
-    <div className={`bg-gray-50 dark:bg-gray-900 min-h-screen w-full transition-colors duration-300 flex flex-col`}>
+    <div
+      className={`bg-gray-50 dark:bg-gray-900 min-h-screen w-full transition-colors duration-300 flex flex-col`}
+    >
       <div className="flex-grow pt-12 pb-12 px-6 w-full">
         <header className="mb-8">
-          <h1 className={`text-4xl font-bold text-center mb-2 text-gray-800 dark:text-gray-100`}>
+          <h1
+            className={`text-4xl font-bold text-center mb-2 text-gray-800 dark:text-gray-100`}
+          >
             Historical Data
           </h1>
           <p className={`text-center text-gray-600 dark:text-gray-300`}>
@@ -201,7 +189,10 @@ const History: React.FC = () => {
         <form onSubmit={handleSubmit} className="mb-8 flex flex-col items-center">
           <div className="flex flex-wrap gap-4 justify-center">
             <div>
-              <label htmlFor="startDate" className={`block mb-2 text-gray-600 dark:text-gray-100`}>
+              <label
+                htmlFor="startDate"
+                className={`block mb-2 text-gray-600 dark:text-gray-100`}
+              >
                 Start Date:
               </label>
               <input
@@ -214,7 +205,10 @@ const History: React.FC = () => {
               />
             </div>
             <div>
-              <label htmlFor="endDate" className={`block mb-2 text-gray-600 dark:text-gray-100`}>
+              <label
+                htmlFor="endDate"
+                className={`block mb-2 text-gray-600 dark:text-gray-100`}
+              >
                 End Date:
               </label>
               <input
@@ -236,8 +230,8 @@ const History: React.FC = () => {
         </form>
 
         {error && (
-          <div className={`text-red-500 mb-4 ${isDarkMode ? 'text-red-400' : 'text-red-500'}`}>
-            {error}
+          <div className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 p-4 rounded mb-6">
+            <p>{error}</p>
           </div>
         )}
 
@@ -252,7 +246,7 @@ const History: React.FC = () => {
                 dataKey="value"
                 unit=" °C"
                 strokeColor="#FF4500"
-                tickFormat="daily"
+                tickFormat={isSameDay ? 'hourly' : 'daily'}
                 yAxisLabel="Temperature (°C)"
                 dy={50}
               />
@@ -265,7 +259,7 @@ const History: React.FC = () => {
                 dataKey="value"
                 unit=" %"
                 strokeColor="#1E90FF"
-                tickFormat="daily"
+                tickFormat={isSameDay ? 'hourly' : 'daily'}
                 yAxisLabel="Humidity (%)"
                 dy={40}
               />
@@ -278,7 +272,7 @@ const History: React.FC = () => {
                 dataKey="value"
                 unit=" hPa"
                 strokeColor="#32CD32"
-                tickFormat="daily"
+                tickFormat={isSameDay ? 'hourly' : 'daily'}
                 yAxisLabel="Pressure (hPa)"
                 dy={40}
                 dx={-15}
@@ -292,7 +286,7 @@ const History: React.FC = () => {
                 dataKey="value"
                 unit=" km/h"
                 strokeColor="#FFD700"
-                tickFormat="daily"
+                tickFormat={isSameDay ? 'hourly' : 'daily'}
                 yAxisLabel="Wind Max Speed (km/h)"
                 dy={70}
                 dx={-5}
@@ -306,7 +300,7 @@ const History: React.FC = () => {
                 dataKey="value"
                 unit=" mm"
                 strokeColor="#4682B4"
-                tickFormat="daily"
+                tickFormat={isSameDay ? 'hourly' : 'daily'}
                 yAxisLabel="Rain (mm)"
                 dy={20}
               />
@@ -318,7 +312,7 @@ const History: React.FC = () => {
                 data={historicalData.uv}
                 dataKey="value"
                 strokeColor="#FFA07A"
-                tickFormat="daily"
+                tickFormat={isSameDay ? 'hourly' : 'daily'}
                 yAxisLabel="UV Index"
                 dy={20}
                 dx={10}
@@ -332,33 +326,15 @@ const History: React.FC = () => {
                 dataKey="value"
                 unit=" lx"
                 strokeColor="#8A2BE2"
-                tickFormat="daily"
+                tickFormat={isSameDay ? 'hourly' : 'daily'}
                 yAxisLabel="Light Lux (lx)"
                 dy={40}
-              />
-            </div>
-            {/* Wind Gauge */}
-            <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
-              <WindGauge
-                speed={historicalData.windSpeed}
-                direction={historicalData.windDirection}
-              />
-            </div>
-            {/* Thermometer Charts */}
-            <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300 flex flex-row justify-between space-x-6 items-center">
-              <ThermometerChart
-                temperature={historicalData.temperatureC}
-                unit="C"
-              />
-              <ThermometerChart
-                temperature={historicalData.temperatureF}
-                unit="F"
               />
             </div>
           </div>
         )}
       </div>
-      
+
       <footer className="bg-white dark:bg-gray-700 transition-colors duration-300 shadow-sm mt-auto">
         <div className="max-w-7xl mx-auto px-4 py-6 text-center text-gray-600 dark:text-gray-300">
           &copy; {new Date().getFullYear()} CSCE 483 Solar Irradiance Project.

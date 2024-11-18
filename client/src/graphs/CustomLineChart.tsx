@@ -31,7 +31,7 @@ const CustomLineChart: React.FC<CustomLineChartProps> = ({
   title,
   data,
   dataKey,
-  unit,
+  unit="",
   strokeColor,
   yAxisLabel,
   dy = 0,
@@ -73,16 +73,14 @@ const CustomLineChart: React.FC<CustomLineChartProps> = ({
             tickFormatter={(tick) => {
               const date = new Date(tick);
               return tickFormat === 'hourly'
-                ? `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`
+                ? date.toLocaleString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                  })
                 : date.toLocaleDateString();
             }}
-            // tickFormatter={(tick) => {
-            //   const date = new Date(tick);
-            //   return `${date.getHours()}:${date
-            //     .getMinutes()
-            //     .toString()
-            //     .padStart(2, '0')}`;
-            // }}
+            // ... rest of the XAxis props
             minTickGap={20}
             allowDataOverflow={false}
             stroke={axisColor}
@@ -108,7 +106,11 @@ const CustomLineChart: React.FC<CustomLineChartProps> = ({
           <Tooltip
             labelFormatter={(label) => {
               const date = new Date(label);
-              return date.toLocaleString();
+              return date.toLocaleString('en-US', {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+                hour12: true
+              });
             }}
             formatter={(value: number) => [`${value}${unit}`, title]}
             contentStyle={{
