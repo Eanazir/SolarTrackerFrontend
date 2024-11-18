@@ -1,11 +1,10 @@
-import React from 'react';
+// src/components/graphs/ThermometerChart.tsx
+import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell } from 'recharts';
 
 interface ThermometerChartProps {
   temperature: number;
   unit?: 'C' | 'F';
-  minTemp?: number;
-  maxTemp?: number;
 }
 
 const ThermometerChart: React.FC<ThermometerChartProps> = ({
@@ -48,12 +47,51 @@ const ThermometerChart: React.FC<ThermometerChartProps> = ({
     }
   };
 
+  // Make isDarkMode a state variable that reacts to changes
+  const [isDarkMode, setIsDarkMode] = useState(
+    document.documentElement.classList.contains('dark')
+  );
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  const textColorClass = isDarkMode ? 'text-gray-100' : 'text-gray-800';
+  const backgroundColorClass = isDarkMode ? 'bg-gray-800' : 'bg-white';
+  const transitionClasses = 'transition-colors duration-300';
+
   return (
-    <div className="bg-white shadow-md rounded p-6 w-full flex flex-col items-center">
-      <h2 className="text-xl font-bold mb-4">Temperature Gauge (°{unit})</h2>
+    <div
+      className={`shadow-md rounded p-6 w-full flex flex-col items-center ${backgroundColorClass} ${transitionClasses}`}
+    >
+      <h2 className={`text-xl font-bold mb-4 ${textColorClass}`}>
+        Temperature Gauge (°{unit})
+      </h2>
       <div className="relative w-full max-w-[300px] flex flex-col items-center">
-        <div className="w-full" style={{ position: 'relative', paddingBottom: '63.33%' }}>
-          <div style={{ position: 'absolute', width: '100%', height: '100%', top: 0, left: 0 }}>
+        <div
+          className="w-full"
+          style={{ position: 'relative', paddingBottom: '63.33%' }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              top: 0,
+              left: 0,
+            }}
+          >
             <PieChart width={300} height={190}>
               <Pie
                 data={data}
@@ -66,7 +104,7 @@ const ThermometerChart: React.FC<ThermometerChartProps> = ({
                 dataKey="value"
               >
                 <Cell fill={getTemperatureColor(temperature, unit)} />
-                <Cell fill="#e0e0e0" />
+                <Cell fill={isDarkMode ? '#555' : '#e0e0e0'} />
               </Pie>
             </PieChart>
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 translate-y-[-25%] text-center">

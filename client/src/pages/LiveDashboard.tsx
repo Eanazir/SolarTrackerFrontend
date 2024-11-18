@@ -115,7 +115,9 @@ const LiveDashboard: React.FC = () => {
         setLightLuxData((prevData) => [...prevData, { time: uniqueTimestamp, value: newData.light_lux }].slice(-50));
   
         if (newData.image_url) {
-          setImageUrls((prevUrls) => [...prevUrls, newData.image_url].slice(-50));
+          if (newData.image_url) {
+            setImageUrls((prevUrls) => [...prevUrls, newData.image_url!].slice(-50));
+          }
         }
       }
     } catch (error) {
@@ -140,56 +142,59 @@ const LiveDashboard: React.FC = () => {
 
   return (
     <ErrorBoundary fallback={<div className="text-red-500">Error loading dashboard</div>}>
-      <div className="bg-gray-50 min-h-screen w-full">
+      <div className="bg-gray-50 dark:bg-gray-900 min-h-screen w-full transition-colors duration-300">
         <div className="pt-12 pb-12 px-6 w-full">
           <header className="mb-8">
-            <h1 className="text-4xl font-bold text-center mb-2 text-gray-800">Live Weather Data</h1>
-            <p className="text-center text-gray-600">Real-time solar irradiance and weather monitoring</p>
+            <div>
+              <h1 className="text-4xl font-bold text-center mb-2 text-gray-800 dark:text-gray-100">
+                Live Weather Data
+              </h1>
+              <p className="text-center text-gray-600 dark:text-gray-300">
+                Real-time solar irradiance and weather monitoring
+              </p>
+            </div>
+            {/* DarkModeToggle is included in App component */}
           </header>
           {error && (
-            <div className="bg-red-100 text-red-800 p-4 rounded mb-6">
+            <div className="bg-red-100 dark:bg-gray-700 transition-colors duration-300 text-red-800 dark:text-red-100 p-4 rounded mb-6">
               <p>{error}</p>
             </div>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white rounded-lg shadow p-4">
-              <CustomLineChart title="Temperature (°C)" data={temperatureData} dataKey="value" unit="°C" strokeColor="#FF4500" yAxisLabel="Temperature (°C)" />
+            <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
+              <CustomLineChart title="Temperature (°C)" data={temperatureData} dataKey="value" unit=" °C" strokeColor="#FF4500" yAxisLabel="Temperature (°C)" dy={50} />
             </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <CustomLineChart title="Humidity (%)" data={humidityData} dataKey="value" unit="%" strokeColor="#1E90FF" yAxisLabel="Humidity (%)" />
+            <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
+              <CustomLineChart title="Humidity (%)" data={humidityData} dataKey="value" unit=" %" strokeColor="#1E90FF" yAxisLabel="Humidity (%)" dy={40} />
             </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <CustomLineChart title="Air Pressure (hPa)" data={airPressureData} dataKey="value" unit="hPa" strokeColor="#32CD32" yAxisLabel="Pressure (hPa)" />
+            <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
+              <CustomLineChart title="Air Pressure (hPa)" data={airPressureData} dataKey="value" unit=" hpa" strokeColor="#32CD32" yAxisLabel="Pressure (hPa)" dy={40} dx={-15} />
             </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <CustomLineChart title="Wind Max Speed (km/h)" data={windMaxSpeedData} dataKey="value" unit="km/h" strokeColor="#FFD700" yAxisLabel="Wind Max Speed" />
+            <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
+              <CustomLineChart title="Wind Max Speed (km/h)" data={windMaxSpeedData} dataKey="value" unit=" km/h" strokeColor="#FFD700" yAxisLabel="Wind Max Speed (km/h)" dy={70} dx={-5} />
             </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <CustomLineChart title="Rain (mm)" data={rainData} dataKey="value" unit="mm" strokeColor="#4682B4" yAxisLabel="Rain (mm)" />
+            <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
+              <CustomLineChart title="Rain (mm)" data={rainData} dataKey="value" unit=" mm" strokeColor="#4682B4" yAxisLabel="Rain (mm)" dy={20}/>
             </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <CustomLineChart title="UV Index" data={uvData} dataKey="value" unit="" strokeColor="#FFA07A" yAxisLabel="UV Index" />
+            <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
+              <CustomLineChart title="UV Index" data={uvData} dataKey="value" strokeColor="#FFA07A" yAxisLabel="UV Index" dy={20} dx={10} />
             </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <CustomLineChart title="Light Lux (lx)" data={lightLuxData} dataKey="value" unit="lx" strokeColor="#8A2BE2" yAxisLabel="Light Lux (lx)" />
+            <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
+              <CustomLineChart title="Light Lux (lx)" data={lightLuxData} dataKey="value" unit=" lx" strokeColor="#8A2BE2" yAxisLabel="Light Lux (lx)" dy={40} />
             </div>
-            <div className="bg-white rounded-lg shadow p-4">
+            <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
               <WindGauge speed={data.wind_speed} direction={data.wind_direction} />
             </div>
 
-
-            
-            <div className="bg-white rounded-lg shadow p-4 flex flex-row justify-between space-x-6 items-center">
+            <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300 flex flex-row justify-between space-x-6 items-center dark:bg-gray-700 transition-colors duration-300">
               <ThermometerChart temperature={data.temperature_c} unit="C" />
               <ThermometerChart temperature={data.temperature_f} unit="F" />
             </div>
 
-
-
-            <div className="bg-white shadow-md rounded p-4 flex flex-col items-center">
-              <h2 className="text-xl font-bold mb-4 text-center">Live Image</h2>
+            <div className="bg-white shadow-md rounded p-4 flex flex-col items-center dark:bg-gray-700 transition-colors duration-300">
+              <h2 className="text-xl font-bold mb-4 text-center dark:text-gray-300">Live Image</h2>
               {data.image_url ? (
-                <div className="bg-white p-2 rounded-md shadow">
+                <div className="bg-white p-2 rounded-md shadow dark:bg-gray-700 transition-colors duration-300">
                   <img
                     src={data.image_url}
                     alt="Weather"
@@ -197,7 +202,7 @@ const LiveDashboard: React.FC = () => {
                   />
                 </div>
               ) : (
-                <p className="text-gray-500 text-lg">No image available</p>
+                <p className="text-gray-500 text-lg dark:text-gray-300">No image available</p>
               )}
             </div>
 
@@ -205,14 +210,14 @@ const LiveDashboard: React.FC = () => {
           </div>
 
           {/* Timelapse Section */}
-          <div className="bg-white shadow-md rounded-lg p-6 mt-6 flex flex-col items-center">
-            <h2 className="text-3xl font-bold mb-6 text-gray-800">Timelapse</h2>
+          <div className="bg-white dark:bg-gray-700 transition-colors duration-300 shadow-md rounded-lg p-6 mt-6 flex flex-col items-center">
+            <h2 className="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-300">Timelapse</h2>
             {imageUrls.length === 0 ? (
               <div className="flex justify-center items-center h-64 bg-gray-200 rounded-md">
-                <p className="text-gray-500 text-lg">No timelapse images available</p>
+                <p className="text-gray-500 text-lg dark:text-gray-300">No timelapse images available</p>
               </div>
             ) : (
-              <div className="bg-white p-2 rounded-md shadow">
+              <div className="bg-white p-2 rounded-md shadow dark:bg-gray-800 transition-colors duration-300">
                 <Timelapse images={imageUrls} interval={1500} />
               </div>
             )}
@@ -220,8 +225,8 @@ const LiveDashboard: React.FC = () => {
 
         </div>
 
-        <footer className="bg-white shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 py-6 text-center text-gray-600">
+        <footer className="bg-white dark:bg-gray-700 transition-colors duration-300 shadow-sm transition-colors duration-300">
+          <div className="max-w-7xl mx-auto px-4 py-6 text-center text-gray-600 dark:text-gray-300">
             &copy; {new Date().getFullYear()} CSCE 483 Solar Irradiance Project.
           </div>
         </footer>

@@ -2,44 +2,46 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
 import LiveDashboard from './pages/LiveDashboard';
-// import History from './components/History';
-// import ExportData from './components/ExportData';
+import DarkModeToggle from './components/DarkModeToggle';
 
 const App: React.FC = () => {
   return (
     <Router>
-      <nav className="flex justify-around bg-blue-600 p-4 text-white">
-        <NavLink
-          to="/"
-          className={({ isActive }) =>
-            isActive
-              ? "font-extrabold bg-blue-800 p-2 rounded transition duration-300"
-              : "font-bold p-2 rounded transition duration-300"
-          }
-          end
-        >
-          Live Dashboard
-        </NavLink>
-        <NavLink
-          to="/history"
-          className={({ isActive }) =>
-            isActive
-              ? "font-extrabold bg-blue-800 p-2 rounded transition duration-300"
-              : "font-bold p-2 rounded transition duration-300"
-          }
-        >
-          History
-        </NavLink>
-        <NavLink
-          to="/export"
-          className={({ isActive }) =>
-            isActive
-              ? "font-extrabold bg-blue-800 p-2 rounded transition duration-300"
-              : "font-bold p-2 rounded transition duration-300"
-          }
-        >
-          Export
-        </NavLink>
+      <nav className="flex items-center bg-blue-600 p-4 text-white">
+        <div className="flex flex-1 justify-around">
+          <NavLink
+            to="/"
+            className={({ isActive }) =>
+              isActive
+                ? 'font-extrabold bg-blue-800 p-2 rounded transition duration-300'
+                : 'font-bold p-2 rounded transition duration-300'
+            }
+            end
+          >
+            Live Dashboard
+          </NavLink>
+          <NavLink
+            to="/history"
+            className={({ isActive }) =>
+              isActive
+                ? 'font-extrabold bg-blue-800 p-2 rounded transition duration-300'
+                : 'font-bold p-2 rounded transition duration-300'
+            }
+          >
+            History
+          </NavLink>
+          <NavLink
+            to="/export"
+            className={({ isActive }) =>
+              isActive
+                ? 'font-extrabold bg-blue-800 p-2 rounded transition duration-300'
+                : 'font-bold p-2 rounded transition duration-300'
+            }
+          >
+            Export
+          </NavLink>
+        </div>
+        <DarkModeToggle />
       </nav>
       <Routes>
         <Route path="/" element={<LiveDashboard />} />

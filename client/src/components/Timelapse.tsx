@@ -32,9 +32,9 @@ const Timelapse: React.FC<TimelapseProps> = ({ images, interval = 1500 }) => {
   }
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center ">
       {/* Image Display */}
-      <div className="w-full max-w-2xl">
+      <div className="w-full max-w-2xl ">
         <img
           src={images[currentImageIndex]}
           alt={`Timelapse ${currentImageIndex + 1}`}
@@ -47,7 +47,7 @@ const Timelapse: React.FC<TimelapseProps> = ({ images, interval = 1500 }) => {
       </div>
 
       {/* Controls */}
-      <div className="mt-4 w-full max-w-2xl flex items-center justify-between">
+      <div className="mt-4 w-full max-w-2xl flex items-center justify-between ">
         {/* Play/Pause Button */}
         <button
           className="bg-blue-500 text-white px-4 py-2 rounded shadow hover:bg-blue-600"
@@ -67,7 +67,7 @@ const Timelapse: React.FC<TimelapseProps> = ({ images, interval = 1500 }) => {
         />
 
         {/* Current Image Index */}
-        <div className="text-gray-700 font-medium whitespace-nowrap">
+        <div className="text-gray-700 font-medium whitespace-nowrap dark:text-gray-300">
           Image <span className="font-bold">{currentImageIndex + 1}</span> of{' '}
           <span className="font-bold">{images.length}</span>
         </div>
