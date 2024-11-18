@@ -87,7 +87,7 @@ const CustomLineChart: React.FC<CustomLineChartProps> = ({
             allowDataOverflow={false}
             stroke={axisColor}
             tick={{ fill: axisColor }}
-            label={{ value: 'Time', position: 'insideBottom', dy: 20, fill: axisColor }}
+            label={{ value: 'Time (s)', position: 'insideBottom', dy: 20, fill: axisColor }}
           />
           <YAxis
             domain={['auto', 'auto']}
