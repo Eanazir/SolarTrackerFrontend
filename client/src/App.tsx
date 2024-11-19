@@ -43,6 +43,16 @@ const App: React.FC = () => {
           >
             Export
           </NavLink>
+          <NavLink
+            to="/forecasting"
+            className={({ isActive }) =>
+              isActive
+                ? 'font-extrabold bg-blue-800 p-2 rounded transition duration-300'
+                : 'font-bold p-2 rounded transition duration-300'
+            }
+          >
+            Forecasting
+          </NavLink>
         </div>
         <DarkModeToggle />
       </nav>

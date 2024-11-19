@@ -81,7 +81,7 @@ const LiveDashboard: React.FC = () => {
       // Calculate the dates for the last day
       const endDate = new Date();
       const startDate = new Date();
-      startDate.setDate(startDate.getDate() - 2); // Last 2 day for now //////////////////
+      startDate.setDate(startDate.getDate() - 3); // Last 2 day for now //////////////////
 
       // Convert dates to CST
       const cstEndDate = new Date(endDate.getTime() + CST_OFFSET * 60 * 60 * 1000);
@@ -188,8 +188,6 @@ const LiveDashboard: React.FC = () => {
           image_url: response.data.image_url,
         };
 
-
-
         // Use dataRef.current instead of data
         if (dataRef.current && newData.timestamp === dataRef.current.timestamp) {
           console.log('No new data, skipping update');
@@ -232,6 +230,13 @@ const LiveDashboard: React.FC = () => {
 
         if (newData.image_url) {
           setImageUrls((prevUrls) => [...prevUrls.slice(-49), newData.image_url!]);
+        }
+
+        try {
+          await axios.post('http://sunsightenergy.com/api/process-forecast');
+        } catch (error) {
+          console.error('Error processing weather forecast:', error);
+          // Optionally, you can display a notification to the user here
         }
       }
     } catch (error) {
