@@ -2,6 +2,7 @@
 import { Request, Response } from 'express';
 import pool from '../config/db.js';
 import { Parser } from 'json2csv';
+import * as tf from '@tensorflow/tfjs-node';
 
 // Existing insertWeatherDataWithImage handler
 export const insertWeatherDataWithImage = async (req: Request, res: Response): Promise<Response> => {
@@ -57,7 +58,7 @@ export const insertWeatherDataWithImage = async (req: Request, res: Response): P
           ambientWeatherUV,
           ambientWeatherUVI,
           ambientWeatherLightLux
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
         RETURNING id
       `;
     const insertWeatherValues = [
@@ -205,7 +206,7 @@ export const exportDataToCSV = async (req: Request, res: Response): Promise<Resp
     // Convert JSON to CSV
     const fields = [
       'id',
-      'temperature_c',
+      'temperature_c', 
       'temperature_f',
       'humidity',
       'wind_speed',
@@ -236,3 +237,129 @@ export const exportDataToCSV = async (req: Request, res: Response): Promise<Resp
   }
 };
 
+
+
+export const processWeatherForecast = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    // Start transaction
+    await pool.query('BEGIN');
+
+    // Get the last inserted weather data
+    const lastDataQuery = `
+      SELECT wd.*, wi.image_url
+      FROM weather_data wd
+      LEFT JOIN weather_images wi ON wd.id = wi.weather_data_id
+      ORDER BY wd.timestamp DESC
+      LIMIT 1
+    `;
+    const lastData = await pool.query(lastDataQuery);
+
+    if (!lastData.rows[0]) {
+      await pool.query('ROLLBACK');
+      return res.status(404).json({ error: 'No weather data found' });
+    }
+
+    if (!lastData.rows[0].image_url) {
+      await pool.query('ROLLBACK');
+      return res.status(404).json({ error: 'No image found for latest weather data' });
+    }
+
+    // Load Keras model
+    const model = await tf.loadLayersModel('file://path/to/your/model.json');
+
+    const timestamp = new Date(lastData.rows[0].timestamp);
+    const hour = timestamp.getHours() / 23.0; // Normalize hour
+    const dayOfYear = (timestamp.getTime() - new Date(timestamp.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24);
+    const normalizedDayOfYear = dayOfYear / 365.0; // Normalize day of year
+    const windDirRad = (lastData.rows[0].wind_direction * Math.PI) / 180;
+    const windDirSin = Math.sin(windDirRad);
+    const windDirCos = Math.cos(windDirRad);
+
+    // Prepare input data tensor
+    const inputData = tf.tensor2d([
+      lastData.rows[0].temperature_c,
+      lastData.rows[0].humidity,
+      lastData.rows[0].pressure,
+      lastData.rows[0].wind_speed,
+      windDirSin,
+      windDirCos,
+      hour,
+      normalizedDayOfYear
+    ]);
+
+    const imageResponse = await fetch(lastData.rows[0].image_url);
+    const imageBuffer = await imageResponse.arrayBuffer();
+    const image = await tf.node.decodeImage(new Uint8Array(imageBuffer), 3);
+    const processedImage = tf.expandDims(image);
+
+    // Get prediction
+    const prediction = model.predict([processedImage, inputData]) as tf.Tensor;
+    const forecastValues = await prediction.data();
+
+    // Insert forecasts query
+    const insertForecastQuery = `
+      INSERT INTO forecasts (
+        date,
+        "5minForecast",
+        "15minForecast", 
+        "30minForecast",
+        "60minForecast"
+      ) VALUES ($1, $2, $3, $4, $5)
+      RETURNING id
+    `;
+
+    const forecastParams = [
+      timestamp, // Timestamp associated with the predictions
+      forecastValues[0], // 5 min forecast
+      forecastValues[1], // 15 min forecast
+      forecastValues[2], // 30 min forecast
+      forecastValues[3]  // 60 min forecast
+    ];
+
+    const forecastResult = await pool.query(insertForecastQuery, forecastParams);
+
+    // Commit transaction
+    await pool.query('COMMIT');
+
+    return res.status(201).json({
+      message: 'Forecast processed successfully',
+      forecast_id: forecastResult.rows[0].id
+    });
+
+  } catch (error) {
+    await pool.query('ROLLBACK');
+    console.error('Error processing forecast:', error);
+    return res.status(500).json({ error: 'Error processing forecast' });
+  }
+};
+
+export const getLatestForecast = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const queryText = `
+      SELECT date,
+             "5minForecast",
+             "15minForecast",
+             "30minForecast",
+             "60minForecast"
+      FROM forecasts
+      ORDER BY date DESC
+      LIMIT 1
+    `;
+    const result = await pool.query(queryText);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'No forecasts found.' });
+    }
+
+    return res.json({
+      date: result.rows[0].date,
+      '5minForecast': result.rows[0]['5minForecast'],
+      '15minForecast': result.rows[0]['15minForecast'],
+      '30minForecast': result.rows[0]['30minForecast'],
+      '60minForecast': result.rows[0]['60minForecast']
+    });
+  } catch (error) {
+    console.error('Error fetching latest forecast:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};

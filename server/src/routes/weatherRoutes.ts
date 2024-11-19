@@ -5,6 +5,8 @@ import {
   getLiveData,
   getHistoricalData,
   exportDataToCSV,
+  processWeatherForecast,
+  getLatestForecast,
 } from '../controllers/weatherController.js';
 import upload from '../middleware/upload.js';
 
@@ -27,6 +29,19 @@ const typedExportDataToCSV: RequestHandler = (req: Request, res: Response, next)
     exportDataToCSV(req, res).catch(next);
 };
 
+// Add new typed handler
+const typedProcessForecast: RequestHandler = (req: Request, res: Response, next) => {
+    processWeatherForecast(req, res).catch(next);
+};
+
+const typedGetLatestForecast: RequestHandler = (req: Request, res: Response, next) => {
+    getLatestForecast(req, res).catch(next);
+  };
+  
+
+// Add new route after insert-data route
+router.post('/process-forecast', typedProcessForecast);
+
 // Route to insert weather data with image
 router.post('/insert-data', upload.single('image'), typedInsertWeatherData);
 
@@ -38,5 +53,10 @@ router.get('/history-data', typedGetHistoricalData);
 
 // Route to export data to CSV for a date/time range
 router.get('/export-data', typedExportDataToCSV);
+
+//router to get the latest forecasts from the forecast table
+router.get('/latest-forecast', typedGetLatestForecast);
+
+
 
 export default router;
