@@ -13,6 +13,7 @@ import {
 interface CustomDataPoint {
   time: number; // Timestamp in milliseconds
   value: number;
+  image_url?: string; // Optional image URL
 }
 
 interface CustomLineChartProps {
@@ -24,19 +25,21 @@ interface CustomLineChartProps {
   yAxisLabel?: string;
   dy?: number;
   dx?: number;
-  tickFormat: 'hourly'  | 'daily'; 
+  tickFormat: 'hourly' | 'daily';
+  onClick?: (dataPoint: CustomDataPoint) => void; // Optional onClick handler
 }
 
 const CustomLineChart: React.FC<CustomLineChartProps> = ({
   title,
   data,
   dataKey,
-  unit="",
+  unit = '',
   strokeColor,
   yAxisLabel,
   dy = 0,
   dx = 0,
-  tickFormat
+  tickFormat,
+  onClick, // Destructure onClick
 }) => {
   const [isDarkMode, setIsDarkMode] = useState(
     document.documentElement.classList.contains('dark')
@@ -58,12 +61,23 @@ const CustomLineChart: React.FC<CustomLineChartProps> = ({
   }, []);
 
   const axisColor = isDarkMode ? '#ccc' : '#333';
-  const gridColor = isDarkMode ? '#444' : '#ccc ';
+  const gridColor = isDarkMode ? '#444' : '#ccc';
 
   return (
     <div className="bg-white dark:bg-gray-800 shadow-md rounded p-4 transition-colors duration-300">
-      <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100 transition-colors duration-300 text-center">{title} Over Time</h2>      <ResponsiveContainer width="100%" height={320}>
-        <LineChart data={data} margin={{ top: 10, right: 10, left: 20, bottom: 20 }}>
+      <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100 transition-colors duration-300 text-center">
+        {title} Over Time
+      </h2>
+      <ResponsiveContainer width="100%" height={320}>
+        <LineChart
+          data={data}
+          margin={{ top: 10, right: 10, left: 20, bottom: 20 }}
+          onClick={(e) => {
+            if (e && e.activePayload && e.activePayload[0] && onClick) {
+              onClick(e.activePayload[0].payload); // Pass the clicked data point
+            }
+          }}
+        >
           <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
           <XAxis
             dataKey="time"
@@ -76,16 +90,15 @@ const CustomLineChart: React.FC<CustomLineChartProps> = ({
                 ? date.toLocaleString('en-US', {
                     hour: 'numeric',
                     minute: '2-digit',
-                    hour12: true
+                    hour12: true,
                   })
                 : date.toLocaleDateString();
             }}
-            // ... rest of the XAxis props
             minTickGap={20}
             allowDataOverflow={false}
             stroke={axisColor}
             tick={{ fill: axisColor }}
-            label={{ value: 'Time (s)', position: 'insideBottom', dy: 20, fill: axisColor }}
+            label={{ value: 'Time', position: 'insideBottom', dy: 20, fill: axisColor }}
           />
           <YAxis
             domain={['auto', 'auto']}
@@ -109,7 +122,7 @@ const CustomLineChart: React.FC<CustomLineChartProps> = ({
               return date.toLocaleString('en-US', {
                 dateStyle: 'medium',
                 timeStyle: 'short',
-                hour12: true
+                hour12: true,
               });
             }}
             formatter={(value: number) => [`${value}${unit}`, title]}

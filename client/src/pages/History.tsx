@@ -1,6 +1,8 @@
 // src/pages/History.tsx
 import React, { useState, useEffect } from 'react';
 import CustomLineChart from '../graphs/CustomLineChart';
+import Timelapse from '../components/Timelapse';
+import Modal from '../components/Modal'; // Import the Modal component
 
 const EARLIEST_DATE = new Date('2024-11-15');
 const CST_OFFSET = -6 * 60; // CST is UTC-6 in minutes
@@ -8,6 +10,7 @@ const CST_OFFSET = -6 * 60; // CST is UTC-6 in minutes
 interface DataPoint {
   time: number;
   value: number;
+  image_url?: string; // Optional image URL
 }
 
 const History: React.FC = () => {
@@ -33,6 +36,9 @@ const History: React.FC = () => {
 
   const [error, setError] = useState<string>('');
   const [isSameDay, setIsSameDay] = useState<boolean>(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null); // State for selected image
+  const [imageUrls, setImageUrls] = useState<string[]>([]); // State for timelapse images
+
   const [historicalData, setHistoricalData] = useState<{
     temperature: DataPoint[];
     humidity: DataPoint[];
@@ -68,18 +74,37 @@ const History: React.FC = () => {
     };
   }, []);
 
+  // Handler for clicking on a data point
+  const handleDataPointClick = (dataPoint: DataPoint) => {
+    if (dataPoint.image_url) {
+      // Preload the image
+      const img = new Image();
+      img.src = dataPoint.image_url;
+      img.onload = () => {
+        setSelectedImage(dataPoint.image_url || null);
+      };
+      img.onerror = () => {
+        console.error('Error loading image:', dataPoint.image_url);
+        setError('Failed to load the selected image.');
+      };
+    } else {
+      setSelectedImage(null);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setHistoricalData(null);
+    setSelectedImage(null); // Reset selected image on new fetch
 
     const start = new Date(startDate);
     const end = new Date(endDate);
     const today = new Date();
 
     // Check if same day selected
-    const isSameDay = start.toISOString().split('T')[0] === end.toISOString().split('T')[0];
-    setIsSameDay(isSameDay);
+    const sameDay = start.toISOString().split('T')[0] === end.toISOString().split('T')[0];
+    setIsSameDay(sameDay);
 
     // Validation checks
     if (start < EARLIEST_DATE) {
@@ -105,7 +130,6 @@ const History: React.FC = () => {
       );
 
       if (!response.ok) {
-        // throw new Error('Failed to fetch data, could be that no data found for the selected date range.');
         setError('Failed to fetch data, could be that no data found for the selected date range.');
         return;
       }
@@ -121,36 +145,44 @@ const History: React.FC = () => {
       // Transform API data to match component state structure
       const transformedData = {
         temperature: data.map((d: any) => ({
-          time: new Date(d.timestamp.slice(0,-1)).getTime(),
+          time: new Date(d.timestamp.slice(0, -1)).getTime(),
           value: parseFloat(d.temperature_c.toFixed(2)),
+          image_url: d.image_url || '', // Include image_url
         })),
         humidity: data.map((d: any) => ({
-          time: new Date(d.timestamp.slice(0,-1)).getTime(),
+          time: new Date(d.timestamp.slice(0, -1)).getTime(),
           value: parseFloat(d.humidity.toFixed(2)),
+          image_url: d.image_url || '',
         })),
         pressure: data.map((d: any) => ({
-          time: new Date(d.timestamp.slice(0,-1)).getTime(),
+          time: new Date(d.timestamp.slice(0, -1)).getTime(),
           value: parseFloat(d.pressure.toFixed(2)),
+          image_url: d.image_url || '',
         })),
         windMaxSpeed: data.map((d: any) => ({
-          time: new Date(d.timestamp.slice(0,-1)).getTime(),
+          time: new Date(d.timestamp.slice(0, -1)).getTime(),
           value: parseFloat(d.ambientweatherwindmaxspeed.toFixed(2)),
+          image_url: d.image_url || '',
         })),
         rain: data.map((d: any) => ({
-          time: new Date(d.timestamp.slice(0,-1)).getTime(),
+          time: new Date(d.timestamp.slice(0, -1)).getTime(),
           value: parseFloat(d.ambientweatherrain.toFixed(2)),
+          image_url: d.image_url || '',
         })),
         uv: data.map((d: any) => ({
-          time: new Date(d.timestamp.slice(0,-1)).getTime(),
+          time: new Date(d.timestamp.slice(0, -1)).getTime(),
           value: parseFloat(d.ambientweatheruv.toFixed(2)),
+          image_url: d.image_url || '',
         })),
         uvi: data.map((d: any) => ({
-          time: new Date(d.timestamp.slice(0,-1)).getTime(),
+          time: new Date(d.timestamp.slice(0, -1)).getTime(),
           value: parseFloat(d.ambientweatheruvi.toFixed(2)),
+          image_url: d.image_url || '',
         })),
         lightLux: data.map((d: any) => ({
-          time: new Date(d.timestamp.slice(0,-1)).getTime(),
+          time: new Date(d.timestamp.slice(0, -1)).getTime(),
           value: parseFloat(d.ambientweatherlightlux.toFixed(2)),
+          image_url: d.image_url || '',
         })),
         // Use the latest values for gauges
         windSpeed: parseFloat(data[data.length - 1].wind_speed.toFixed(2)),
@@ -160,6 +192,12 @@ const History: React.FC = () => {
       };
 
       setHistoricalData(transformedData);
+
+      // Update imageUrls for timelapse
+      const images = data
+        .filter((d: any) => d.image_url)
+        .map((d: any) => d.image_url);
+      setImageUrls(images);
     } catch (err) {
       setError('Failed to fetch historical data');
       console.error(err);
@@ -249,6 +287,7 @@ const History: React.FC = () => {
                 tickFormat={isSameDay ? 'hourly' : 'daily'}
                 yAxisLabel="Temperature (°C)"
                 dy={50}
+                onClick={handleDataPointClick} // Pass the click handler
               />
             </div>
             {/* Humidity Chart */}
@@ -262,6 +301,7 @@ const History: React.FC = () => {
                 tickFormat={isSameDay ? 'hourly' : 'daily'}
                 yAxisLabel="Humidity (%)"
                 dy={40}
+                onClick={handleDataPointClick}
               />
             </div>
             {/* Air Pressure Chart */}
@@ -276,6 +316,7 @@ const History: React.FC = () => {
                 yAxisLabel="Pressure (hPa)"
                 dy={40}
                 dx={-15}
+                onClick={handleDataPointClick}
               />
             </div>
             {/* Wind Max Speed Chart */}
@@ -290,6 +331,7 @@ const History: React.FC = () => {
                 yAxisLabel="Wind Max Speed (km/h)"
                 dy={70}
                 dx={-5}
+                onClick={handleDataPointClick}
               />
             </div>
             {/* Rain Chart */}
@@ -303,6 +345,7 @@ const History: React.FC = () => {
                 tickFormat={isSameDay ? 'hourly' : 'daily'}
                 yAxisLabel="Rain (mm)"
                 dy={20}
+                onClick={handleDataPointClick}
               />
             </div>
             {/* UV Index Chart */}
@@ -316,6 +359,7 @@ const History: React.FC = () => {
                 yAxisLabel="UV Index"
                 dy={20}
                 dx={10}
+                onClick={handleDataPointClick}
               />
             </div>
             {/* Light Lux Chart */}
@@ -329,11 +373,41 @@ const History: React.FC = () => {
                 tickFormat={isSameDay ? 'hourly' : 'daily'}
                 yAxisLabel="Light Lux (lx)"
                 dy={40}
+                onClick={handleDataPointClick}
               />
             </div>
           </div>
         )}
+
+        {/* Timelapse Section */}
+        {imageUrls.length > 0 && (
+          <div className="bg-white dark:bg-gray-700 transition-colors duration-300 shadow-md rounded-lg p-6 mt-6 flex flex-col items-center">
+            <h2 className="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-300">
+              Timelapse
+            </h2>
+            <Timelapse images={imageUrls} interval={1500} />
+          </div>
+        )}
       </div>
+
+      {/* Modal for Selected Image */}
+      <Modal isOpen={!!selectedImage} onClose={() => setSelectedImage(null)}>
+        {selectedImage && (
+          <div className="flex flex-col items-center">
+            <img
+              src={selectedImage}
+              alt="Selected Data Point"
+              className="max-w-full h-auto rounded-md shadow-md"
+            />
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+            >
+              Close
+            </button>
+          </div>
+        )}
+      </Modal>
 
       <footer className="bg-white dark:bg-gray-700 transition-colors duration-300 shadow-sm mt-auto">
         <div className="max-w-7xl mx-auto px-4 py-6 text-center text-gray-600 dark:text-gray-300">
