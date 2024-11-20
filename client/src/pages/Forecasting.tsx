@@ -58,7 +58,7 @@ const Forecasting: React.FC = () => {
 
       setForecastData(forecastPoints);
     } catch (error) {
-      console.error('Error fetching forecast:', error);
+      console.error('Error fetching forecast :', error);
       // Handle error appropriately
     }
   };
