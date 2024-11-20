@@ -4,7 +4,6 @@ import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-do
 import LiveDashboard from './pages/LiveDashboard';
 import DarkModeToggle from './components/DarkModeToggle';
 import History from './pages/History';
-// import ExportData from './pages/ExportData';
 import Forecasting from './pages/Forecasting';
 import Logo from './components/Logo.tsx';
 
@@ -35,16 +34,6 @@ const App: React.FC = () => {
           >
             History
           </NavLink>
-          {/* <NavLink
-            to="/export"
-            className={({ isActive }) =>
-              isActive
-                ? 'font-extrabold bg-blue-800 p-2 rounded transition duration-300'
-                : 'font-bold p-2 rounded transition duration-300'
-            }
-          >
-            Export
-          </NavLink> */}
           <NavLink
             to="/forecasting"
             className={({ isActive }) =>
@@ -57,11 +46,11 @@ const App: React.FC = () => {
           </NavLink>
         </div>
         <DarkModeToggle />
+        
       </nav>
       <Routes>
         <Route path="/" element={<LiveDashboard />} />
         <Route path="/history" element={<History />} />
-        {/* <Route path="/export" element = {<ExportData/>} /> */}
         <Route path="/forecasting" element={<Forecasting />} />
       </Routes>
     </Router>
