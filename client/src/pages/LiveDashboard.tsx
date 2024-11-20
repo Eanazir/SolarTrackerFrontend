@@ -147,9 +147,7 @@ const LiveDashboard: React.FC = () => {
         );
 
         // Update the image URLs for timelapse
-        const imageUrls = last50Data
-          .filter((d) => d.image_url)
-          .map((d) => d.image_url!);
+        const imageUrls = last50Data.filter((d) => d.image_url).map((d) => d.image_url!);
         setImageUrls(imageUrls);
 
         // Set the latest data point as the current data
@@ -159,13 +157,32 @@ const LiveDashboard: React.FC = () => {
     } catch (error) {
       console.error('Error fetching historical data:', error);
       setError('Unable to fetch historical data.');
+
+      // Log detailed error information
+      if (axios.isAxiosError(error)) {
+        console.error('Axios error message:', error.message);
+        if (error.response) {
+          console.error('Axios error response data:', error.response.data);
+          console.error('Axios error response status:', error.response.status);
+          console.error('Axios error response headers:', error.response.headers);
+        }
+      }
     }
   };
 
   // Function to fetch live data
   const fetchLiveData = async () => {
     try {
-      const response = await axios.get<LiveData>('https://sunsightenergy.com/api/live-data');
+      // Log the URL being fetched
+      const liveDataUrl = 'https://sunsightenergy.com/api/live-data';
+      console.log('Fetching live data from URL:', liveDataUrl);
+
+      const response = await axios.get<LiveData>(liveDataUrl);
+
+      // Log the response status and data
+      console.log('Live data response status:', response.status);
+      console.log('Live data response data:', response.data);
+
       if (response.data) {
         const newData: LiveData = {
           temperature_c: parseFloat((response.data.temperature_c ?? 0).toFixed(2)),
@@ -196,7 +213,7 @@ const LiveDashboard: React.FC = () => {
 
         setData(newData);
 
-        const timestamp = new Date(newData.timestamp.slice(0,-1)).getTime();
+        const timestamp = new Date(newData.timestamp.slice(0, -1)).getTime();
 
         // Append new data to charts, keeping only last 50 data points
         setTemperatureData((prevData) => [
@@ -232,16 +249,38 @@ const LiveDashboard: React.FC = () => {
           setImageUrls((prevUrls) => [...prevUrls.slice(-49), newData.image_url!]);
         }
 
-        try {
-          await axios.post('https://sunsightenergy.com/api/process-forecast');
-        } catch (error) {
-          console.error('Error processing weather forecast:', error);
-          // Optionally, you can display a notification to the user here
-        }
+        // try {
+        //   const forecastUrl = 'https://sunsightenergy.com/api/process-forecast';
+        //   console.log('Processing weather forecast at URL:', forecastUrl);
+
+        //   await axios.post(forecastUrl);
+        // } catch (error) {
+        //   console.error('Error processing weather forecast:', error);
+
+        //   // Log detailed error information
+        //   if (axios.isAxiosError(error)) {
+        //     console.error('Axios error message:', error.message);
+        //     if (error.response) {
+        //       console.error('Axios error response data:', error.response.data);
+        //       console.error('Axios error response status:', error.response.status);
+        //       console.error('Axios error response headers:', error.response.headers);
+        //     }
+        //   }
+        // }
       }
     } catch (error) {
       console.error('Error fetching live data:', error);
       setError('Unable to fetch live data at this time.');
+
+      // Log detailed error information
+      if (axios.isAxiosError(error)) {
+        console.error('Axios error message:', error.message);
+        if (error.response) {
+          console.error('Axios error response data:', error.response.data);
+          console.error('Axios error response status:', error.response.status);
+          console.error('Axios error response headers:', error.response.headers);
+        }
+      }
     }
   };
 
@@ -409,18 +448,14 @@ const LiveDashboard: React.FC = () => {
                   />
                 </div>
               ) : (
-                <p className="text-gray-500 text-lg dark:text-gray-300">
-                  No image available
-                </p>
+                <p className="text-gray-500 text-lg dark:text-gray-300">No image available</p>
               )}
             </div>
           </div>
 
           {/* Timelapse Section */}
           <div className="bg-white dark:bg-gray-700 transition-colors duration-300 shadow-md rounded-lg p-6 mt-6 flex flex-col items-center">
-            <h2 className="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-300">
-              Timelapse
-            </h2>
+            <h2 className="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-300">Timelapse</h2>
             {imageUrls.length === 0 ? (
               <div className="flex justify-center items-center h-64 bg-gray-200 rounded-md">
                 <p className="text-gray-500 text-lg dark:text-gray-300">
@@ -435,7 +470,7 @@ const LiveDashboard: React.FC = () => {
           </div>
         </div>
 
-        <footer className="bg-white dark:bg-gray-700 transition-colors duration-300 shadow-sm transition-colors duration-300">
+        <footer className="bg-white dark:bg-gray-700 transition-colors duration-300 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 py-6 text-center text-gray-600 dark:text-gray-300">
             &copy; {new Date().getFullYear()} CSCE 483 Solar Irradiance Project.
           </div>
