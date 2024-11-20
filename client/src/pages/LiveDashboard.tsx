@@ -64,6 +64,12 @@ const LiveDashboard: React.FC = () => {
   const [humidityData, setHumidityData] = useState<ChartDataPoint[]>([]);
   const [airPressureData, setAirPressureData] = useState<ChartDataPoint[]>([]);
   const [windMaxSpeedData, setWindMaxSpeedData] = useState<ChartDataPoint[]>([]);
+
+  const [ambientTempData, setAmbientTempData] = useState<ChartDataPoint[]>([]);
+  const [ambientHumidityData, setAmbientHumidityData] = useState<ChartDataPoint[]>([]);
+  const [ambientWindDirectionData, setAmbientWindDirectionData] = useState<ChartDataPoint[]>([]);
+  const [ambientWindSpeedData, setAmbientWindSpeedData] = useState<ChartDataPoint[]>([]);
+  
   const [rainData, setRainData] = useState<ChartDataPoint[]>([]);
   const [uvData, setUVData] = useState<ChartDataPoint[]>([]);
   const [lightLuxData, setLightLuxData] = useState<ChartDataPoint[]>([]);
@@ -100,75 +106,104 @@ const LiveDashboard: React.FC = () => {
         const historicalData = response.data;
         // console.log('Historical data:', historicalData);
 
-        // Take the last 50 data points
-        const last50Data = historicalData.slice(-50);
+        // Take the last 200 data points
+        const last200Data = historicalData.slice(-200);
         // Update chart data arrays
         setTemperatureData(
-          last50Data.map((d) => ({
+          last200Data.map((d) => ({
             time: new Date(d.timestamp.slice(0, -1)).getTime(),
             value: d.temperature_c ? parseFloat(d.temperature_c.toFixed(2)) : 0,
           }))
         );
         setHumidityData(
-          last50Data.map((d) => ({
+          last200Data.map((d) => ({
             time: new Date(d.timestamp.slice(0, -1)).getTime(),
             value: d.humidity ? parseFloat(d.humidity.toFixed(2)) : 0,
           }))
         );
         setAirPressureData(
-          last50Data.map((d) => ({
+          last200Data.map((d) => ({
             time: new Date(d.timestamp.slice(0, -1)).getTime(),
             value: d.pressure ? parseFloat(d.pressure.toFixed(2)) : 0,
           }))
         );
         setWindMaxSpeedData(
-          last50Data.map((d) => ({
+          last200Data.map((d) => ({
             time: new Date(d.timestamp.slice(0, -1)).getTime(),
             value: d.ambientweatherwindmaxspeed ? parseFloat(d.ambientweatherwindmaxspeed.toFixed(2)) : 0,
           }))
         );
+
+        setAmbientTempData(
+          last200Data.map((d) => ({
+            time: new Date(d.timestamp.slice(0, -1)).getTime(),
+            value: d.ambientweathertemp ? parseFloat(d.ambientweathertemp.toFixed(2)) : 0,
+          }))
+        );
+        
+        setAmbientHumidityData(
+          last200Data.map((d) => ({
+            time: new Date(d.timestamp.slice(0, -1)).getTime(),
+            value: d.ambientweatherhumidity ? parseFloat(d.ambientweatherhumidity.toFixed(2)) : 0,
+          }))
+        );
+        
+        setAmbientWindDirectionData(
+          last200Data.map((d) => ({
+            time: new Date(d.timestamp.slice(0, -1)).getTime(),
+            value: d.ambientweatherwinddirection ? parseFloat(d.ambientweatherwinddirection.toFixed(2)) : 0,
+          }))
+        );
+        
+        setAmbientWindSpeedData(
+          last200Data.map((d) => ({
+            time: new Date(d.timestamp.slice(0, -1)).getTime(),
+            value: d.ambientweatherwindspeed ? parseFloat(d.ambientweatherwindspeed.toFixed(2)) : 0,
+          }))
+        );
+        
         setRainData(
-          last50Data.map((d) => ({
+          last200Data.map((d) => ({
             time: new Date(d.timestamp.slice(0, -1)).getTime(),
             value: d.ambientweatherrain ? parseFloat(d.ambientweatherrain.toFixed(2)) : 0,
           }))
         );
         setUVData(
-          last50Data.map((d) => ({
+          last200Data.map((d) => ({
             time: new Date(d.timestamp.slice(0, -1)).getTime(),
             value: d.ambientweatheruv ? d.ambientweatheruv : 0,
           }))
         );
         setLightLuxData(
-          last50Data.map((d) => ({
+          last200Data.map((d) => ({
             time: new Date(d.timestamp.slice(0, -1)).getTime(),
             value: d.ambientweatherlightlux ? parseFloat(d.ambientweatherlightlux.toFixed(2)) : 0,
           }))
         );
 
-        // Update the image URLs for timelapse
-        const imageUrls = last50Data.filter((d) => d.image_url).map((d) => d.image_url!);
-        setImageUrls(imageUrls);
+ // Update the image URLs for timelapse
+ const imageUrls = last200Data.filter((d) => d.image_url).map((d) => d.image_url!);
+ setImageUrls(imageUrls);
 
-        // Set the latest data point as the current data
-        const latestData = last50Data[last50Data.length - 1];
-        setData(latestData);
-      }
-    } catch (error) {
-      console.error('Error fetching historical data:', error);
-      setError('Unable to fetch historical data.');
+ // Set the latest data point as the current data
+ const latestData = last200Data[last200Data.length - 1];
+ setData(latestData);
+}
+} catch (error) {
+console.error('Error fetching historical data:', error);
+setError('Unable to fetch historical data.');
 
-      // Log detailed error information
-      if (axios.isAxiosError(error)) {
-        console.error('Axios error message:', error.message);
-        if (error.response) {
-          console.error('Axios error response data:', error.response.data);
-          console.error('Axios error response status:', error.response.status);
-          console.error('Axios error response headers:', error.response.headers);
-        }
-      }
-    }
-  };
+// Log detailed error information
+if (axios.isAxiosError(error)) {
+ console.error('Axios error message:', error.message);
+ if (error.response) {
+   console.error('Axios error response data:', error.response.data);
+   console.error('Axios error response status:', error.response.status);
+   console.error('Axios error response headers:', error.response.headers);
+ }
+}
+}
+};
 
   // Function to fetch live data
   const fetchLiveData = async () => {
@@ -194,6 +229,7 @@ const LiveDashboard: React.FC = () => {
           pressure: parseFloat((response.data.pressure ?? 1013).toFixed(2)),
           ambientweatherbatteryok: response.data.ambientweatherbatteryok ?? true,
           ambientweathertemp: parseFloat((response.data.ambientweathertemp ?? 0).toFixed(2)),
+          
           ambientweatherhumidity: parseFloat((response.data.ambientweatherhumidity ?? 0).toFixed(2)),
           ambientweatherwinddirection: parseFloat((response.data.ambientweatherwinddirection ?? 0).toFixed(2)),
           ambientweatherwindspeed: parseFloat((response.data.ambientweatherwindspeed ?? 0).toFixed(2)),
@@ -217,56 +253,45 @@ const LiveDashboard: React.FC = () => {
 
         // Append new data to charts, keeping only last 50 data points
         setTemperatureData((prevData) => [
-          ...prevData.slice(-49),
+          ...prevData.slice(-199),
           { time: timestamp, value: newData.temperature_c },
         ]);
         setHumidityData((prevData) => [
-          ...prevData.slice(-49),
+          ...prevData.slice(-199),
           { time: timestamp, value: newData.humidity },
         ]);
         setAirPressureData((prevData) => [
-          ...prevData.slice(-49),
+          ...prevData.slice(-199),
           { time: timestamp, value: newData.pressure },
         ]);
         setWindMaxSpeedData((prevData) => [
-          ...prevData.slice(-49),
+          ...prevData.slice(-199),
           { time: timestamp, value: newData.ambientweatherwindmaxspeed },
         ]);
+        setAmbientWindSpeedData((prevData) => [
+          ...prevData.slice(-199),
+          { time: timestamp, value: newData.ambientweatherwindspeed },
+        ]);
+        setAmbientHumidityData((prevData) => [
+          ...prevData.slice(-199),
+          { time: timestamp, value: newData.ambientweatherhumidity },
+        ]);
         setRainData((prevData) => [
-          ...prevData.slice(-49),
+          ...prevData.slice(-199),
           { time: timestamp, value: newData.ambientweatherrain },
         ]);
         setUVData((prevData) => [
-          ...prevData.slice(-49),
+          ...prevData.slice(-199),
           { time: timestamp, value: newData.ambientweatheruv },
         ]);
         setLightLuxData((prevData) => [
-          ...prevData.slice(-49),
+          ...prevData.slice(-199),
           { time: timestamp, value: newData.ambientweatherlightlux },
         ]);
 
         if (newData.image_url) {
-          setImageUrls((prevUrls) => [...prevUrls.slice(-49), newData.image_url!]);
+          setImageUrls((prevUrls) => [...prevUrls.slice(-199), newData.image_url!]);
         }
-
-        // try {
-        //   const forecastUrl = 'https://sunsightenergy.com/api/process-forecast';
-        //   console.log('Processing weather forecast at URL:', forecastUrl);
-
-        //   await axios.post(forecastUrl);
-        // } catch (error) {
-        //   console.error('Error processing weather forecast:', error);
-
-        //   // Log detailed error information
-        //   if (axios.isAxiosError(error)) {
-        //     console.error('Axios error message:', error.message);
-        //     if (error.response) {
-        //       console.error('Axios error response data:', error.response.data);
-        //       console.error('Axios error response status:', error.response.status);
-        //       console.error('Axios error response headers:', error.response.headers);
-        //     }
-        //   }
-        // }
       }
     } catch (error) {
       console.error('Error fetching live data:', error);
@@ -323,12 +348,30 @@ const LiveDashboard: React.FC = () => {
               </p>
             </div>
           </header>
+
+
+          
           {error && (
             <div className="bg-red-100 dark:bg-gray-700 transition-colors duration-300 text-red-800 dark:text-red-100 p-4 rounded mb-6">
               <p>{error}</p>
             </div>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
+              <CustomLineChart
+                title="Solar Irradiance (W/m²)"
+                data={lightLuxData.map(item => ({
+                  ...item,
+                  value: item.value * 0.0079 // lux to solar irr
+                }))}
+                dataKey="value"
+                unit=" W/m²"
+                strokeColor="#FFD700"
+                tickFormat="hourly"
+                yAxisLabel="Solar Irradiance (W/m²)"
+                dy={40}
+              />
+            </div>
             {/* Temperature Chart */}
             <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
               <CustomLineChart
@@ -369,6 +412,32 @@ const LiveDashboard: React.FC = () => {
                 dx={-15}
               />
             </div>
+            <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
+              <CustomLineChart
+                title="Wind Direction (°)"
+                data={ambientWindDirectionData}
+                dataKey="value"
+                unit=" °"
+                strokeColor="#8A2BE2"
+                tickFormat="hourly"
+                yAxisLabel="Wind Direction (°)"
+                dy={40}
+              />
+            </div>
+            <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
+              <CustomLineChart
+                title="Ambient Humidity (%)"
+                data={ambientHumidityData}
+                dataKey="value"
+                unit=" %"
+                strokeColor="#1E90FF"
+                tickFormat="hourly"
+                yAxisLabel="Ambient Humidity (%)"
+                dy={40}
+              />
+            </div>
+
+
             {/* Wind Max Speed Chart */}
             <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
               <CustomLineChart
@@ -383,6 +452,19 @@ const LiveDashboard: React.FC = () => {
                 dx={-5}
               />
             </div>
+            <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
+              <CustomLineChart
+                title="Wind Speed (m/s)"
+                data={ambientWindSpeedData}
+                dataKey="value"
+                unit=" m/s"
+                strokeColor="#32CD32"
+                tickFormat="hourly"
+                yAxisLabel="Wind Speed (m/s)"
+                dy={40}
+              />
+            </div>
+
             {/* Rain Chart */}
             <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
               <CustomLineChart
@@ -434,6 +516,7 @@ const LiveDashboard: React.FC = () => {
               <ThermometerChart temperature={data.temperature_c} unit="C" />
               <ThermometerChart temperature={data.temperature_f} unit="F" />
             </div>
+
             {/* Live Image */}
             <div className="bg-white shadow-md rounded p-4 flex flex-col items-center dark:bg-gray-700 transition-colors duration-300">
               <h2 className="text-xl font-bold mb-4 text-center dark:text-gray-300">
