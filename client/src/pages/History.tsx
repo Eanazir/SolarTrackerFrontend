@@ -126,7 +126,7 @@ const History: React.FC = () => {
       const formattedEndDate = end.toISOString().split('T')[0];
 
       const response = await fetch(
-        `http://sunsightenergy.com/api/history-data?startDate=${formattedStartDate}&endDate=${formattedEndDate}`
+        `https://sunsightenergy.com/api/history-data?startDate=${formattedStartDate}&endDate=${formattedEndDate}`
       );
 
       if (!response.ok) {

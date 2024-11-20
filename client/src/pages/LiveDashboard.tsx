@@ -93,7 +93,7 @@ const LiveDashboard: React.FC = () => {
       console.log('Fetching historical data from', formattedStartDate, 'to', formattedEndDate);
 
       const response = await axios.get<LiveData[]>(
-        `http://sunsightenergy.com/api/history-data?startDate=${formattedStartDate}&endDate=${formattedEndDate}`
+        `https://sunsightenergy.com/api/history-data?startDate=${formattedStartDate}&endDate=${formattedEndDate}`
       );
 
       if (response.data) {
@@ -165,7 +165,7 @@ const LiveDashboard: React.FC = () => {
   // Function to fetch live data
   const fetchLiveData = async () => {
     try {
-      const response = await axios.get<LiveData>('http://sunsightenergy.com/api/live-data');
+      const response = await axios.get<LiveData>('https://sunsightenergy.com/api/live-data');
       if (response.data) {
         const newData: LiveData = {
           temperature_c: parseFloat((response.data.temperature_c ?? 0).toFixed(2)),
@@ -233,7 +233,7 @@ const LiveDashboard: React.FC = () => {
         }
 
         try {
-          await axios.post('http://sunsightenergy.com/api/process-forecast');
+          await axios.post('https://sunsightenergy.com/api/process-forecast');
         } catch (error) {
           console.error('Error processing weather forecast:', error);
           // Optionally, you can display a notification to the user here
