@@ -1,4 +1,3 @@
-// src/pages/History.tsx
 import React, { useState, useEffect } from 'react';
 import CustomLineChart from '../graphs/CustomLineChart';
 import Timelapse from '../components/Timelapse';
@@ -23,7 +22,6 @@ const History: React.FC = () => {
 
     // Make sure we don't go before EARLIEST_DATE
     const minDate = new Date(Math.max(EARLIEST_DATE.getTime(), cstDate.getTime()));
-
     return minDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
   });
 
@@ -204,6 +202,52 @@ const History: React.FC = () => {
     }
   };
 
+  const handleExport = () => {
+    if (!historicalData) {
+      setError('No data available to export');
+      return;
+    }
+
+    const headers = ['Timestamp', 'Temperature (°C)', 'Humidity (%)', 'Pressure (hPa)', 'Wind Max Speed (km/h)', 'Rain (mm)', 'UV Index', 'UVI', 'Light Lux (lx)'];
+    const dataPoints = historicalData.temperature.map((_, index) => ({
+      time: historicalData.temperature[index].time,
+      temperature: historicalData.temperature[index].value,
+      humidity: historicalData.humidity[index]?.value,
+      pressure: historicalData.pressure[index]?.value,
+      windMaxSpeed: historicalData.windMaxSpeed[index]?.value,
+      rain: historicalData.rain[index]?.value,
+      uv: historicalData.uv[index]?.value,
+      uvi: historicalData.uvi[index]?.value,
+      lightLux: historicalData.lightLux[index]?.value,
+    }));
+
+    const rows = dataPoints.map((item) => [
+      new Date(item.time).toISOString(),
+      item.temperature?.toFixed(2),
+      item.humidity?.toFixed(2),
+      item.pressure?.toFixed(2),
+      item.windMaxSpeed?.toFixed(2),
+      item.rain?.toFixed(2),
+      item.uv?.toFixed(2),
+      item.uvi?.toFixed(2),
+      item.lightLux?.toFixed(2),
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(',')),
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `weather_data_${startDate}_to_${endDate}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const datePickerClasses =
     'border p-2 rounded bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 transition-colors duration-300';
 
@@ -219,12 +263,15 @@ const History: React.FC = () => {
             Historical Data
           </h1>
           <p className={`text-center text-gray-600 dark:text-gray-300`}>
-            View historical weather data
+            View and export historical weather data
           </p>
         </header>
 
         {/* Form - Always visible */}
-        <form onSubmit={handleSubmit} className="mb-8 flex flex-col items-center">
+        <form
+          onSubmit={handleSubmit}
+          className="mb-4 flex flex-col items-center"
+        >
           <div className="flex flex-wrap gap-4 justify-center">
             <div>
               <label
@@ -273,6 +320,17 @@ const History: React.FC = () => {
           </div>
         )}
 
+        {historicalData && (
+          <div className="flex justify-center mb-4">
+            <button
+              onClick={handleExport}
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            >
+              Export to CSV
+            </button>
+          </div>
+        )}
+
         {/* Charts - Only visible when data exists */}
         {historicalData && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -284,7 +342,7 @@ const History: React.FC = () => {
                 dataKey="value"
                 unit=" °C"
                 strokeColor="#FF4500"
-                tickFormat={isSameDay ? 'hourly' : 'daily'}
+                tickFormat={isSameDay ? "hourly" : "daily"}
                 yAxisLabel="Temperature (°C)"
                 dy={50}
                 onClick={handleDataPointClick} // Pass the click handler
@@ -298,7 +356,7 @@ const History: React.FC = () => {
                 dataKey="value"
                 unit=" %"
                 strokeColor="#1E90FF"
-                tickFormat={isSameDay ? 'hourly' : 'daily'}
+                tickFormat={isSameDay ? "hourly" : "daily"}
                 yAxisLabel="Humidity (%)"
                 dy={40}
                 onClick={handleDataPointClick}
@@ -312,7 +370,7 @@ const History: React.FC = () => {
                 dataKey="value"
                 unit=" hPa"
                 strokeColor="#32CD32"
-                tickFormat={isSameDay ? 'hourly' : 'daily'}
+                tickFormat={isSameDay ? "hourly" : "daily"}
                 yAxisLabel="Pressure (hPa)"
                 dy={40}
                 dx={-15}
@@ -327,7 +385,7 @@ const History: React.FC = () => {
                 dataKey="value"
                 unit=" km/h"
                 strokeColor="#FFD700"
-                tickFormat={isSameDay ? 'hourly' : 'daily'}
+                tickFormat={isSameDay ? "hourly" : "daily"}
                 yAxisLabel="Wind Max Speed (km/h)"
                 dy={70}
                 dx={-5}
@@ -342,7 +400,7 @@ const History: React.FC = () => {
                 dataKey="value"
                 unit=" mm"
                 strokeColor="#4682B4"
-                tickFormat={isSameDay ? 'hourly' : 'daily'}
+                tickFormat={isSameDay ? "hourly" : "daily"}
                 yAxisLabel="Rain (mm)"
                 dy={20}
                 onClick={handleDataPointClick}
@@ -355,7 +413,7 @@ const History: React.FC = () => {
                 data={historicalData.uv}
                 dataKey="value"
                 strokeColor="#FFA07A"
-                tickFormat={isSameDay ? 'hourly' : 'daily'}
+                tickFormat={isSameDay ? "hourly" : "daily"}
                 yAxisLabel="UV Index"
                 dy={20}
                 dx={10}
@@ -370,7 +428,7 @@ const History: React.FC = () => {
                 dataKey="value"
                 unit=" lx"
                 strokeColor="#8A2BE2"
-                tickFormat={isSameDay ? 'hourly' : 'daily'}
+                tickFormat={isSameDay ? "hourly" : "daily"}
                 yAxisLabel="Light Lux (lx)"
                 dy={40}
                 onClick={handleDataPointClick}
@@ -388,26 +446,26 @@ const History: React.FC = () => {
             <Timelapse images={imageUrls} interval={1500} />
           </div>
         )}
-      </div>
 
-      {/* Modal for Selected Image */}
-      <Modal isOpen={!!selectedImage} onClose={() => setSelectedImage(null)}>
-        {selectedImage && (
-          <div className="flex flex-col items-center">
-            <img
-              src={selectedImage}
-              alt="Selected Data Point"
-              className="max-w-full h-auto rounded-md shadow-md"
-            />
-            <button
-              onClick={() => setSelectedImage(null)}
-              className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-            >
-              Close
-            </button>
-          </div>
-        )}
-      </Modal>
+        {/* Modal for Selected Image */}
+        <Modal isOpen={!!selectedImage} onClose={() => setSelectedImage(null)}>
+          {selectedImage && (
+            <div className="flex flex-col items-center">
+              <img
+                src={selectedImage}
+                alt="Selected Data Point"
+                className="max-w-full h-auto rounded-md shadow-md"
+              />
+              <button
+                onClick={() => setSelectedImage(null)}
+                className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+              >
+                Close
+              </button>
+            </div>
+          )}
+        </Modal>
+      </div>
 
       <footer className="bg-white dark:bg-gray-700 transition-colors duration-300 shadow-sm mt-auto">
         <div className="max-w-7xl mx-auto px-4 py-6 text-center text-gray-600 dark:text-gray-300">
