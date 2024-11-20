@@ -28,7 +28,7 @@ app.use('/', weatherRoutes);
 
 // Health Check Route
 app.get('/test', (req, res) => {
-  res.send('Weather Tracker API is running.');
+  res.send('Weather Tracker API is running.  sudo certbot certonly --standalone -d sunsightenergy.com');
 });
 
 // Start the server
