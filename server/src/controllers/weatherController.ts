@@ -336,13 +336,13 @@ export const processWeatherForecast = async (req: Request, res: Response): Promi
 export const getLatestForecast = async (req: Request, res: Response): Promise<Response> => {
   try {
     const queryText = `
-      SELECT date,
+      SELECT forecastdate,
              "5minForecast",
              "15minForecast",
              "30minForecast",
              "60minForecast"
       FROM forecasts
-      ORDER BY date DESC
+      ORDER BY forecastdate DESC
       LIMIT 1
     `;
     const result = await pool.query(queryText);
