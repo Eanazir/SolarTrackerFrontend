@@ -33,7 +33,7 @@ const App: React.FC = () => {
           >
             History
           </NavLink>
-          <NavLink
+          {/* <NavLink
             to="/export"
             className={({ isActive }) =>
               isActive
@@ -42,7 +42,7 @@ const App: React.FC = () => {
             }
           >
             Export
-          </NavLink>
+          </NavLink> */}
           <NavLink
             to="/forecasting"
             className={({ isActive }) =>
@@ -59,9 +59,8 @@ const App: React.FC = () => {
       <Routes>
         <Route path="/" element={<LiveDashboard />} />
         <Route path="/history" element={<History />} />
-        <Route path="/export" element = {<ExportData/>} />
+        {/* <Route path="/export" element = {<ExportData/>} /> */}
         <Route path="/forecasting" element = {<Forecasting/>} />
-        <Route path="/history" element={<History />} />
         <Route path="/export" element={<ExportData />} />
       </Routes>
     </Router>
