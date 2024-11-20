@@ -1,7 +1,7 @@
 // src/components/Forecasting.tsx
-import React, { useState, useEffect } from 'react';
-import CustomLineChart from '../graphs/CustomLineChart';
 import axios from 'axios';
+import React, { useEffect, useState } from 'react';
+import CustomLineChart from '../graphs/CustomLineChart';
 
 interface ForecastInput {
   temperature_c: number;
@@ -42,7 +42,7 @@ const Forecasting: React.FC = () => {
 
   const handleSubmit = async () => {
     try {
-      const response = await axios.get('http://sunsightenergy.com/api/latest-forecast');
+      const response = await axios.get('https://sunsightenergy.com/api/latest-httpforecast');
       const predictions = response.data;
 
       const currentTime = new Date(predictions.date).getTime();
