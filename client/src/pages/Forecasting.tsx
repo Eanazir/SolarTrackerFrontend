@@ -42,10 +42,13 @@ const Forecasting: React.FC = () => {
 
   const handleSubmit = async () => {
     try {
-      const response = await axios.get('https://sunsightenergy.com/api/latest-httpforecast');
+      const response = await axios.get('https://sunsightenergy.com/api/latest-forecast');
       const predictions = response.data;
 
-      const currentTime = new Date(predictions.date).getTime();
+      console.log('forecasting response status:', response.status);
+      console.log('forecasting response data:', response.data);
+
+      const currentTime = new Date(predictions.forecastdate).getTime();
       const forecastPoints: ForecastPoint[] = [
         { time: currentTime + 5 * 60000, value: predictions['5minForecast'] },
         { time: currentTime + 15 * 60000, value: predictions['15minForecast'] },
