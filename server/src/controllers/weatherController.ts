@@ -450,6 +450,15 @@ export const exportDataToCSV = async (req: Request, res: Response): Promise<Resp
 
 export const processWeatherForecast = async (req: Request, res: Response): Promise<Response> => {
   try {
+
+    if (!global.lstm_model) {
+      console.error('TensorFlow model is not loaded.');
+      return res.status(500).json({ error: 'TensorFlow model is not loaded.' });
+    }
+    if (!global.lstm_scaler) {
+      console.error('Scaler is not loaded.');
+      return res.status(500).json({ error: 'TensorFlow model is not loaded.' });
+    }
     // Start transaction
     await pool.query('BEGIN');
 
@@ -465,7 +474,9 @@ export const processWeatherForecast = async (req: Request, res: Response): Promi
 
     if (lastData.rows.length < 5) {
       await pool.query('ROLLBACK');
+      console.log("not enough data in database");
       return res.status(404).json({ error: 'Not enough weather data found' });
+
     }
 
     // Prepare input data tensor
@@ -481,28 +492,24 @@ export const processWeatherForecast = async (req: Request, res: Response): Promi
     ]);
 
     // Load Keras model
-    let model;
-    try {
-      model = await tf.loadLayersModel('file://server/src/model/LSTM_MODEL_5MIN.keras');
-    } catch (modelError) {
-      await pool.query('ROLLBACK');
-      console.error('Error loading Keras model:', modelError);
-      return res.status(500).json({ error: 'Error loading Keras model' });
-    }
+    // let model;
+    // try {
+    //   model = await tf.loadLayersModel('file://server/src/model/LSTM_MODEL_5MIN.keras');
+    //   console.log("inputted into the model")
+    // } catch (modelError) {
+    //   await pool.query('ROLLBACK');
+    //   console.error('Error loading Keras model:', modelError);
+    //   return res.status(500).json({ error: 'Error loading Keras model' });
+    // }
 
     // Get prediction
-    const prediction = model.predict(tf.tensor2d(inputData)) as tf.Tensor;
+    const prediction = global.lstm_model.predict(tf.tensor2d(inputData)) as tf.Tensor;
     const forecastValues = await prediction.array() as number[][];
 
     // Destructure the inner array to get the forecast values
     const [fiveMin] = forecastValues[0];
 
-    // Inverse transform the 5-minute forecast
-    const scalerPath =  '/home/ec2-user/SolarTrackerWebApp/server/src/model/scaler_y_params.json'; // Adjust the path as necessary
-    const scalerData = await fs.promises.readFile(scalerPath, 'utf-8');
-    const scalerParams = JSON.parse(scalerData);
-    const originalFiveMin = inverseTransform([fiveMin], scalerParams)[0];
-
+    const originalFiveMin = inverseTransform([fiveMin], global.lstm_scaler)[0];
     // Insert forecasts query
     const insertForecastQuery = `
       INSERT INTO forecasts (
@@ -542,6 +549,7 @@ export const processWeatherForecast = async (req: Request, res: Response): Promi
 
 export const getLatestForecast = async (req: Request, res: Response): Promise<Response> => {
   try {
+    console.log("executing get latest forecast")
     const queryText = `
       SELECT forecastdate,
              "5minForecast",
@@ -557,6 +565,9 @@ export const getLatestForecast = async (req: Request, res: Response): Promise<Re
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'No forecasts found.' });
     }
+
+    console.log('Query result:', result.rows);
+
 
     return res.json({
       date: result.rows[0].date,

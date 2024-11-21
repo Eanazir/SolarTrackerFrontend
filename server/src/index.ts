@@ -56,7 +56,9 @@ app.get('/test', (req, res) => {
 // Define global variables for model and scaler
 declare global {
     var cnn_model: tf.LayersModel | undefined;
+    var lstm_model: tf.LayersModel | undefined;
     var scaler: Scaler | undefined;
+    var lstm_scaler: Scaler | undefined;
 }
 
 // Function to load the TensorFlow model
@@ -64,6 +66,7 @@ const loadModel = async () => {
     try {
         const modelPath = `file://${path.join(__dirname, 'models/cnn/tfjs_model/model.json')}`;
         global.cnn_model = await tf.loadLayersModel(modelPath);
+        global.lstm_model = await tf.loadLayersModel(lstm_model_path);
         console.log('TensorFlow model loaded successfully.');
     } catch (error) {
         console.error('Error loading TensorFlow model:', error);
@@ -76,8 +79,11 @@ const loadScaler = async () => {
     try {
         const scalerPath =  `${path.join(__dirname, 'models/cnn/scaler_params.json')}`; // Adjust the path as necessary
         const scalerData = await fs.readFile(scalerPath, 'utf-8');
+        const lstm_scaler_Data = await fs.readFile(lstm_scalerPath, 'utf-8');
         const scalerParams = JSON.parse(scalerData);
+        const lstm_scalerParams = JSON.parse(lstm_scaler_Data);
         global.scaler = new Scaler(scalerParams);
+        global.lstm_scaler = new Scaler(lstm_scalerParams);
         console.log('Scaler parameters loaded successfully.');
     } catch (error) {
         console.error('Error loading scaler parameters:', error);
