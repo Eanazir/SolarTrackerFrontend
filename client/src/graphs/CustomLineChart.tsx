@@ -1,8 +1,4 @@
 // src/components/graphs/CustomLineChart.tsx
-<<<<<<< HEAD
-=======
-
->>>>>>> a6796a872f664b4a9adc57a6d304e2d80b5253da
 import React, { useState, useEffect } from 'react';
 import {
   LineChart,
@@ -14,27 +10,6 @@ import {
   CartesianGrid,
 } from 'recharts';
 
-<<<<<<< HEAD
-interface CustomDataPoint {
-  time: number; // Timestamp in milliseconds
-  value: number;
-  image_url?: string; // Optional image URL
-}
-
-interface CustomLineChartProps {
-  title: string;
-  data: CustomDataPoint[];
-  dataKey: string;
-  unit?: string;
-  strokeColor: string;
-  yAxisLabel?: string;
-  dy?: number;
-  dx?: number;
-  tickFormat: 'hourly' | 'daily';
-  onClick?: (dataPoint: CustomDataPoint) => void; // Optional onClick handler
-}
-
-=======
 /**
  * @interface CustomDataPoint
  * Defines the structure for each data point in the chart.
@@ -77,7 +52,6 @@ interface CustomLineChartProps {
  * @component CustomLineChart
  * Renders a customizable line chart using Recharts.
  */
->>>>>>> a6796a872f664b4a9adc57a6d304e2d80b5253da
 const CustomLineChart: React.FC<CustomLineChartProps> = ({
   title,
   data,
@@ -88,12 +62,8 @@ const CustomLineChart: React.FC<CustomLineChartProps> = ({
   dy = 0,
   dx = 0,
   tickFormat,
-<<<<<<< HEAD
-  onClick, // Destructure onClick
-=======
   onClick,
   additionalLines = [], // Default to empty array if not provided
->>>>>>> a6796a872f664b4a9adc57a6d304e2d80b5253da
 }) => {
   const [isDarkMode, setIsDarkMode] = useState(
     document.documentElement.classList.contains('dark')
@@ -179,11 +149,7 @@ const CustomLineChart: React.FC<CustomLineChartProps> = ({
                 hour12: true,
               });
             }}
-<<<<<<< HEAD
-            formatter={(value: number) => [`${value}${unit}`, title]}
-=======
             formatter={(value: number, name: string) => [`${value}${unit}`, name]}
->>>>>>> a6796a872f664b4a9adc57a6d304e2d80b5253da
             contentStyle={{
               backgroundColor: isDarkMode ? '#333' : '#fff',
               borderColor: isDarkMode ? '#888' : '#ccc',
@@ -191,10 +157,7 @@ const CustomLineChart: React.FC<CustomLineChartProps> = ({
             itemStyle={{ color: axisColor }}
             labelStyle={{ color: axisColor }}
           />
-<<<<<<< HEAD
-=======
           {/* Render the main line */}
->>>>>>> a6796a872f664b4a9adc57a6d304e2d80b5253da
           <Line
             type="linear"
             dataKey={dataKey}
@@ -204,8 +167,6 @@ const CustomLineChart: React.FC<CustomLineChartProps> = ({
             activeDot={{ r: 6 }}
             isAnimationActive={false}
           />
-<<<<<<< HEAD
-=======
           {/* Render additional lines if any */}
           {additionalLines.map((line, index) => (
             <Line
@@ -220,7 +181,6 @@ const CustomLineChart: React.FC<CustomLineChartProps> = ({
               isAnimationActive={false}
             />
           ))}
->>>>>>> a6796a872f664b4a9adc57a6d304e2d80b5253da
         </LineChart>
       </ResponsiveContainer>
     </div>

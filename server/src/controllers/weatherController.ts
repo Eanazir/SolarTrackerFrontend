@@ -6,6 +6,7 @@ import * as tf from '@tensorflow/tfjs-node';
 import fetch from 'node-fetch';
 import { Scaler } from '../utils/scaler.js'; // Ensure correct path
 import * as fs from 'fs';
+import path from 'path';
 
 // Declare global variables for model and scaler
 declare global {
@@ -22,8 +23,11 @@ interface ScalerParams {
   data_range: number[];
 }
 
+
 // Load the scaler parameters from the JSON file
-// const scalerParams: ScalerParams = JSON.parse(fs.readFileSync('scaler_y_params.json', 'utf8'));
+// const scalerParamsPath = path.resolve(__dirname, '/home/ec2-user/SolarTrackerWebApp/server/src/model/scaler_y_params.json');
+// const scalerParams: ScalerParams = JSON.parse(fs.readFileSync(scalerParamsPath, 'utf8'));
+
 
 // Function to perform the inverse transformation
 function inverseTransform(scaledValues: number[], scalerParams: ScalerParams): number[] {
@@ -37,7 +41,6 @@ export const processCnnWeatherForecast = async (weatherDataId: number): Promise<
     // -----------------------------
     // 1. Ensure Model and Scaler are Loaded
     // -----------------------------
-    
     if (!global.cnn_model) {
       console.error('TensorFlow model is not loaded.');
       return { success: false };
@@ -50,7 +53,6 @@ export const processCnnWeatherForecast = async (weatherDataId: number): Promise<
     // -----------------------------
     // 2. Fetch the Current Data Point
     // -----------------------------
-    
     const currentDataQuery = `
       SELECT wd.*, wi.image_url
       FROM weather_data wd
@@ -71,13 +73,15 @@ export const processCnnWeatherForecast = async (weatherDataId: number): Promise<
       return { success: false };
     }
 
-    const currentTimestamp = new Date(currentData.timestamp);
-    const targetTimestamp = new Date(currentTimestamp.getTime() + 5 * 60 * 1000); // 5 minutes ahead
+    // -----------------------------
+    // 3. Define Target Timestamp (5 Minutes Ahead)
+    // -----------------------------
+    const targetTimestamp = new Date(currentData.timestamp);
+    targetTimestamp.setMinutes(targetTimestamp.getMinutes() + 5); // 5 minutes ahead
 
     // -----------------------------
-    // 3. Check if Forecast Already Exists
+    // 4. Check if Forecast Already Exists
     // -----------------------------
-    
     const forecastCheckQuery = `
       SELECT COUNT(*) 
       FROM cnn_forecasts 
@@ -92,116 +96,84 @@ export const processCnnWeatherForecast = async (weatherDataId: number): Promise<
     }
 
     // -----------------------------
-    // 4. Manual Timezone Handling (CST)
+    // 5. Fetch the Last Image (Including Current)
     // -----------------------------
-
-    // Define CST offset (UTC-6)
-    const CST_OFFSET = -6;
-
-    // Current UTC time
-    const now = new Date();
-
-    // Convert current UTC time to CST by adding the offset
-    const cstNow = new Date(now.getTime() + CST_OFFSET * 60 * 60 * 1000);
-
-    // Start of the current day in CST
-    const startOfDayCST = new Date(cstNow);
-    startOfDayCST.setHours(0, 0, 0, 0);
-
-    // End of the current day in CST
-    const endOfDayCST = new Date(cstNow);
-    endOfDayCST.setHours(23, 59, 59, 999);
-
-    // Convert start and end of day back to UTC for querying
-    const startOfDayUTC = new Date(startOfDayCST.getTime() - CST_OFFSET * 60 * 60 * 1000);
-    const endOfDayUTC = new Date(endOfDayCST.getTime() - CST_OFFSET * 60 * 60 * 1000);
-
-    // -----------------------------
-    // 5. Fetch Data Only for Current CST Day
-    // -----------------------------
-
-    const fetchDailyDataQuery = `
+    // Adjust the query to fetch the latest image up to and including the currentDataId
+    const lastImageQuery = `
       SELECT wd.*, wi.image_url
       FROM weather_data wd
       LEFT JOIN weather_images wi ON wd.id = wi.weather_data_id
-      WHERE wd.timestamp >= $1 
-        AND wd.timestamp <= $2
-      ORDER BY wd.timestamp ASC
+      WHERE wd.timestamp <= $1
+      ORDER BY wd.timestamp DESC
+      LIMIT 1
     `;
+    const lastImageResult = await pool.query(lastImageQuery, [currentData.timestamp]);
 
-    const allDataResult = await pool.query(fetchDailyDataQuery, [
-      startOfDayUTC.toISOString(),
-      endOfDayUTC.toISOString()
-    ]);
-
-    const allData = allDataResult.rows;
-
-    // -----------------------------
-    // 6. Prepare the Input Sequence (Images Only)
-    // -----------------------------
-
-    const inputSequence: tf.Tensor[] = [];
-
-    for (const dataPoint of allData) {
-      if (!dataPoint.image_url) {
-        console.error(`Missing image URL for weather data ID ${dataPoint.id}.`);
-        return { success: false };
-      }
-
-      // Fetch and process the image
-      const imageResponse = await fetch(dataPoint.image_url);
-      if (!imageResponse.ok) {
-        console.error(`Failed to fetch image from URL: ${dataPoint.image_url} for weather_data_id: ${dataPoint.id}`);
-        return { success: false };
-      }
-      const imageBuffer = await imageResponse.arrayBuffer();
-      const image = await tf.node.decodeImage(new Uint8Array(imageBuffer), 3);
-      const resizedImage = tf.image.resizeBilinear(image, [299, 299]); // Adjust size if different
-      const normalizedImage = resizedImage.div(255.0); // Normalize
-      inputSequence.push(normalizedImage);
+    if (lastImageResult.rows.length === 0) {
+      console.error(`No data points to make a prediction for weather_data_id: ${weatherDataId}`);
+      return { success: false };
     }
 
-    // Stack images into a tensor with shape [1, sequence_length, 299, 299, 3]
-    const stackedImages = tf.stack(inputSequence);
-    const batchedImages = stackedImages.expandDims(0); // Add batch dimension
+    const lastImageData = lastImageResult.rows[0];
 
-    // -----------------------------
-    // 7. Make Prediction (Images Only)
-    // -----------------------------
+    if (!lastImageData.image_url) {
+      console.error(`No image URL found for weather data ID ${lastImageData.id}`);
+      return { success: false };
+    }
 
-    // Make prediction with images only
-    const prediction = global.cnn_model.predict(batchedImages) as tf.Tensor;
-    const forecastScaled = await prediction.array();
+    try {
+      // Fetch the image from the URL
+      const imageResponse = await fetch(lastImageData.image_url);
+      if (!imageResponse.ok) {
+        console.error(`Failed to fetch image from URL: ${lastImageData.image_url}`);
+        return { success: false };
+      }
 
-    // Inverse scale the prediction to get actual Lux
-    let forecast = global.scaler.inverseScaleFeatures([(forecastScaled as number[][])[0][0]])[0]; // Single value
-    forecast = forecast + 30000; // Adjust for actual Lux values
-    console.log(`Predicted Lux for forecast_time ${targetTimestamp}: ${forecast}`);
+      const imageBuffer = await imageResponse.arrayBuffer();
+      const imageTensor = tf.node.decodeImage(new Uint8Array(imageBuffer), 3); // Decode as RGB
+      const resizedImage = tf.image.resizeBilinear(imageTensor, [299, 299]); // Resize to (299, 299)
+      const normalizedImage = resizedImage.div(255.0).expandDims(0); // Normalize and add batch dimension [1, 299, 299, 3]
 
-    // -----------------------------
-    // 8. Insert Forecast into Database
-    // -----------------------------
+      // -----------------------------
+      // 7. Make Prediction for the Current Image
+      // -----------------------------
+      const prediction = global.cnn_model.predict(normalizedImage) as tf.Tensor;
+      const forecastScaled = await prediction.array(); // Assuming output shape [1, 1]
 
-    const insertForecastQuery = `
-      INSERT INTO cnn_forecasts (
-        weather_data_id,
-        forecast_time,
-        lux_forecast
-      ) VALUES ($1, $2, $3)
-      RETURNING id
-    `;
+      // -----------------------------
+      // 8. Inverse Scale the Prediction to Get Actual Lux
+      // -----------------------------
+      const forecastValueScaled = (forecastScaled as number[][])[0][0]; // Extract the scalar value
+      let forecast = global.scaler.inverseScaleFeatures([forecastValueScaled])[0]; // Inverse transform
+      forecast += 30000; // Adjust for actual Lux values (as per your original logic)
 
-    const forecastParams = [
-      weatherDataId,
-      targetTimestamp, // Forecast time
-      forecast,        // Predicted Lux
-    ];
+      console.log(`Predicted Lux for data_point_id: ${lastImageData.id}, forecast_time: ${targetTimestamp}: ${forecast}`);
 
-    const forecastResult = await pool.query(insertForecastQuery, forecastParams);
+      // -----------------------------
+      // 10. Insert Forecast into Database
+      // -----------------------------
+      const insertForecastQuery = `
+        INSERT INTO cnn_forecasts (
+          weather_data_id,
+          forecast_time,
+          lux_forecast
+        ) VALUES ($1, $2, $3)
+        RETURNING id
+      `;
+      const forecastParams = [
+        weatherDataId,
+        targetTimestamp,     // Forecast time
+        forecast,            // Predicted Lux
+      ];
+      const forecastResult = await pool.query(insertForecastQuery, forecastParams);
 
-    console.log(`Forecast processed for weather_data_id: ${weatherDataId}, Forecast ID: ${forecastResult.rows[0].id}`);
+      console.log(`Forecast processed for weather_data_id: ${weatherDataId}, Forecast ID: ${forecastResult.rows[0].id}`);
 
-    return { success: true };
+      return { success: true };
+    } catch (error) {
+      console.error(`Error processing image for weather data ID ${lastImageData.id}:`, error);
+      return { success: false };
+    }
   } catch (error) {
     console.error('Error processing forecast:', error);
     return { success: false };
@@ -302,13 +274,23 @@ export const insertWeatherDataWithImage = async (req: Request, res: Response): P
     // Check if there are at least 5 data points for the current day
     console.log('Checking data points for forecast...');
     console.log('Timestamp:', timestamp);
-    const currentDate = new Date(timestamp).toISOString().split('T')[0]; // YYYY-MM-DD
+
+    // Convert the timestamp to CST
+    const currentDate = new Date(`${timestamp}-06:00`);
+    console.log('Timestamp:', currentDate);
+
+    // Subtract one day in CST
+    currentDate.setDate(currentDate.getDate() - 1);
+    // Format the date to YYYY-MM-DD
+    const formattedDate = currentDate.toISOString().split('T')[0];
+
+
     const countQuery = `
         SELECT COUNT(*) 
         FROM weather_data 
         WHERE DATE(timestamp) = $1
     `;
-    const countResult = await pool.query(countQuery, [currentDate]);
+    const countResult = await pool.query(countQuery, [formattedDate]);
     const dataPointCount = parseInt(countResult.rows[0].count, 10);
 
     if (dataPointCount >= 5) {
@@ -518,6 +500,9 @@ export const processWeatherForecast = async (req: Request, res: Response): Promi
     const [fiveMin] = forecastValues[0];
 
     // Inverse transform the 5-minute forecast
+    const scalerPath =  '/home/ec2-user/SolarTrackerWebApp/server/src/model/scaler_y_params.json'; // Adjust the path as necessary
+    const scalerData = await fs.promises.readFile(scalerPath, 'utf-8');
+    const scalerParams = JSON.parse(scalerData);
     const originalFiveMin = inverseTransform([fiveMin], scalerParams)[0];
 
     // Insert forecasts query

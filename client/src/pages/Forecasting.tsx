@@ -1,14 +1,8 @@
 // src/components/Forecasting.tsx
-<<<<<<< HEAD
-import axios from 'axios';
-import React, { useEffect, useState } from 'react';
-import CustomLineChart from '../graphs/CustomLineChart';
-=======
 
 import axios from 'axios';
 import React, { useEffect, useState, useMemo } from 'react';
 import CustomLineChart, { LineConfig, CustomDataPoint } from '../graphs/CustomLineChart'; // Import LineConfig and CustomDataPoint types
->>>>>>> a6796a872f664b4a9adc57a6d304e2d80b5253da
 
 interface ForecastInput {
   temperature_c: number;
@@ -17,11 +11,6 @@ interface ForecastInput {
   pressure: number;
 }
 
-<<<<<<< HEAD
-interface ForecastPoint {
-  time: number;
-  value: number;
-=======
 interface HistoricalDataPoint {
   timestamp: string; // ISO format
   lux_actual: number;
@@ -33,7 +22,6 @@ interface LatestForecast {
   forecast_time: string; // ISO format
   lux_forecast: number;
   // Add other fields if necessary
->>>>>>> a6796a872f664b4a9adc57a6d304e2d80b5253da
 }
 
 const Forecasting: React.FC = () => {
@@ -43,25 +31,18 @@ const Forecasting: React.FC = () => {
     humidity: 50,
     pressure: 1013,
   });
-<<<<<<< HEAD
-  const [forecastData, setForecastData] = useState<ForecastPoint[]>([]);
-=======
   
   const [historicalData, setHistoricalData] = useState<HistoricalDataPoint[]>([]);
   const [latestForecast, setLatestForecast] = useState<LatestForecast | null>(null);
   
->>>>>>> a6796a872f664b4a9adc57a6d304e2d80b5253da
   const [isDarkMode, setIsDarkMode] = useState(
     document.documentElement.classList.contains('dark')
   );
 
-<<<<<<< HEAD
-=======
   // Optional: Add loading and error states for better UX
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
->>>>>>> a6796a872f664b4a9adc57a6d304e2d80b5253da
   useEffect(() => {
     const observer = new MutationObserver(() => {
       setIsDarkMode(document.documentElement.classList.contains('dark'));
@@ -76,30 +57,6 @@ const Forecasting: React.FC = () => {
   }, []);
 
   const handleSubmit = async () => {
-<<<<<<< HEAD
-    try {
-      const response = await axios.get('https://sunsightenergy.com/api/latest-forecast');
-      const predictions = response.data;
-
-      console.log('forecasting response status:', response.status);
-      console.log('forecasting response data:', response.data);
-
-      const currentTime = new Date(predictions.forecastdate).getTime();
-      const forecastPoints: ForecastPoint[] = [
-        { time: currentTime + 5 * 60000, value: predictions['5minForecast'] },
-        { time: currentTime + 15 * 60000, value: predictions['15minForecast'] },
-        { time: currentTime + 30 * 60000, value: predictions['30minForecast'] },
-        { time: currentTime + 60 * 60000, value: predictions['60minForecast'] },
-      ];
-
-      setForecastData(forecastPoints);
-    } catch (error) {
-      console.error('Error fetching forecast :', error);
-      // Handle error appropriately
-    }
-  };
-
-=======
     setLoading(true);
     setError(null);
     try {
@@ -185,7 +142,6 @@ const Forecasting: React.FC = () => {
     return [];
   }, [latestForecast]);
 
->>>>>>> a6796a872f664b4a9adc57a6d304e2d80b5253da
   return (
     <div className="p-4 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-300">
       <h1 className="text-2xl font-bold mb-8 text-center text-gray-800 dark:text-gray-100">
@@ -197,25 +153,6 @@ const Forecasting: React.FC = () => {
         <button
           onClick={handleSubmit}
           className="px-6 py-3 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors duration-300"
-<<<<<<< HEAD
-        >
-          Generate Forecast
-        </button>
-      </div>
-
-      {forecastData.length > 0 && (
-        <div className="mt-8 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
-          <CustomLineChart
-            title="Solar Irradiance Forecast"
-            data={forecastData}
-            dataKey="value"
-            unit=" W/m²"
-            strokeColor="#FFA500"
-            tickFormat="hourly"
-          />
-        </div>
-      )}
-=======
           disabled={loading}
         >
           {loading ? 'Loading...' : 'Generate Forecast'}
@@ -242,7 +179,6 @@ const Forecasting: React.FC = () => {
           tickFormat="hourly"
         />
       </div>
->>>>>>> a6796a872f664b4a9adc57a6d304e2d80b5253da
     </div>
   );
 };
