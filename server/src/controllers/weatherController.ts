@@ -5,11 +5,31 @@ import { Parser } from 'json2csv';
 import * as tf from '@tensorflow/tfjs-node';
 import fetch from 'node-fetch';
 import { Scaler } from '../utils/scaler.js'; // Ensure correct path
+import * as fs from 'fs';
 
 // Declare global variables for model and scaler
 declare global {
   var cnn_model: tf.LayersModel | undefined;
   var scaler: Scaler | undefined;
+}
+
+// for inverse transforming model output
+interface ScalerParams {
+  min: number[];
+  scale: number[];
+  data_min: number[];
+  data_max: number[];
+  data_range: number[];
+}
+
+// Load the scaler parameters from the JSON file
+const scalerParams: ScalerParams = JSON.parse(fs.readFileSync('scaler_y_params.json', 'utf8'));
+
+// Function to perform the inverse transformation
+function inverseTransform(scaledValues: number[], scalerParams: ScalerParams): number[] {
+  return scaledValues.map((value, index) => {
+      return (value - scalerParams.min[index]) / scalerParams.scale[index] * scalerParams.data_range[index] + scalerParams.data_min[index];
+  });
 }
 
 export const processCnnWeatherForecast = async (weatherDataId: number): Promise<{ success: boolean }> => {
@@ -279,8 +299,6 @@ export const insertWeatherDataWithImage = async (req: Request, res: Response): P
     // Commit the transaction
     await pool.query('COMMIT');
 
-<<<<<<< HEAD
-=======
     // Check if there are at least 5 data points for the current day
     console.log('Checking data points for forecast...');
     console.log('Timestamp:', timestamp);
@@ -305,16 +323,12 @@ export const insertWeatherDataWithImage = async (req: Request, res: Response): P
     }
 
 
->>>>>>> a6796a872f664b4a9adc57a6d304e2d80b5253da
     return res.status(201).json({
       message: 'Weather data and image uploaded successfully.',
       weather_data_id: weatherDataId, // Return the ID for image association
     });
-<<<<<<< HEAD
-=======
 
 
->>>>>>> a6796a872f664b4a9adc57a6d304e2d80b5253da
   } catch (error) {
     // Rollback the transaction in case of error
     await pool.query('ROLLBACK');

@@ -1,8 +1,4 @@
 // server/src/index.ts
-<<<<<<< HEAD
-=======
-
->>>>>>> a6796a872f664b4a9adc57a6d304e2d80b5253da
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
