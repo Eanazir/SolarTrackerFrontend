@@ -494,6 +494,13 @@ export const processWeatherForecast = async (req: Request, res: Response): Promi
       parseFloat(row.ambientWeatherUV),
       parseFloat(new Date(row.timestamp).toISOString().split('T')[1].replace(/:/g, '').slice(0, 4))
     ]);
+    
+    // Convert inputData to a 3D array
+    const input3DData = [inputData];
+    
+    // Get prediction
+    const prediction = global.lstm_model.predict(tf.tensor3d(input3DData)) as tf.Tensor;
+    const forecastValues = await prediction.array() as number[][];
 
     // Load Keras model
     // let model;
@@ -506,9 +513,6 @@ export const processWeatherForecast = async (req: Request, res: Response): Promi
     //   return res.status(500).json({ error: 'Error loading Keras model' });
     // }
 
-    // Get prediction
-    const prediction = global.lstm_model.predict(tf.tensor2d(inputData)) as tf.Tensor;
-    const forecastValues = await prediction.array() as number[][];
 
     // Destructure the inner array to get the forecast values
     const [fiveMin] = forecastValues[0];
@@ -617,7 +621,7 @@ export const getLatestForecastCNN = async (req: Request, res: Response): Promise
 
     return res.json(result.rows[0]);
   } catch (error) {
-    console.error('Error fetching the latest forecast:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    console.error('Error fetching the latest forecast backend:', error);
+    return res.status(500).json({ error: 'Internal Server Error in backend' });
   }
 };
