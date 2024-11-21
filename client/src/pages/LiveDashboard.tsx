@@ -31,6 +31,7 @@ interface LiveData {
 interface ChartDataPoint {
   time: number;
   value: number;
+  image_url?: string;
 }
 
 class ErrorBoundary extends React.Component<
@@ -56,7 +57,6 @@ class ErrorBoundary extends React.Component<
 }
 
 const CST_OFFSET = -6; // CST is UTC-6
-const day_offset = 2; // Last 2 days for now
 
 const LiveDashboard: React.FC = () => {
   const [data, setData] = useState<LiveData | null>(null);
@@ -84,7 +84,7 @@ const LiveDashboard: React.FC = () => {
   }, [data]);
   
   // Handler for clicking on a data point
-  const handleDataPointClick = (dataPoint: DataPoint) => {
+  const handleDataPointClick = (dataPoint: ChartDataPoint) => {
     if (dataPoint.image_url) {
       // Preload the image
       const img = new Image();

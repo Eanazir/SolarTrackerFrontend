@@ -10,25 +10,48 @@ import {
   CartesianGrid,
 } from 'recharts';
 
-interface CustomDataPoint {
+/**
+ * @interface CustomDataPoint
+ * Defines the structure for each data point in the chart.
+ */
+export interface CustomDataPoint {
   time: number; // Timestamp in milliseconds
-  value: number;
-  image_url?: string; // Optional image URL
+  value: number; // The primary value for the main line
+  image_url?: string; // Optional image URL associated with the data point
 }
 
+/**
+ * @interface LineConfig
+ * Defines the configuration for additional lines in the chart.
+ */
+export interface LineConfig {
+  dataKey: string; // The key corresponding to the data in CustomDataPoint
+  strokeColor: string; // Color of the line
+  strokeDasharray?: string; // Optional dash pattern for the line (e.g., '5 5' for dotted)
+}
+
+/**
+ * @interface CustomLineChartProps
+ * Defines the props accepted by the CustomLineChart component.
+ */
 interface CustomLineChartProps {
   title: string;
-  data: CustomDataPoint[];
-  dataKey: string;
-  unit?: string;
-  strokeColor: string;
-  yAxisLabel?: string;
-  dy?: number;
-  dx?: number;
-  tickFormat: 'hourly' | 'daily';
-  onClick?: (dataPoint: CustomDataPoint) => void; // Optional onClick handler
+  data: CustomDataPoint[]; // Array of data points
+  dataKey: string; // Key for the main line (e.g., 'value')
+  unit?: string; // Unit to display on the Y-axis and tooltips
+  strokeColor: string; // Color for the main line
+  yAxisLabel?: string; // Label for the Y-axis
+  dy?: number; // Y-axis label vertical offset
+  dx?: number; // Y-axis label horizontal offset
+  tickFormat: 'hourly' | 'daily'; // Format for the X-axis ticks
+  onClick?: (dataPoint: CustomDataPoint) => void; // Handler for data point clicks
+  additionalLines?: LineConfig[]; // Configuration for any additional lines
 }
 
+/**
+ * @component CustomLineChart
+ * Renders a customizable line chart using Recharts.
+ */
 const CustomLineChart: React.FC<CustomLineChartProps> = ({
   title,
   data,
@@ -39,7 +62,8 @@ const CustomLineChart: React.FC<CustomLineChartProps> = ({
   dy = 0,
   dx = 0,
   tickFormat,
-  onClick, // Destructure onClick
+  onClick,
+  additionalLines = [], // Default to empty array if not provided
 }) => {
   const [isDarkMode, setIsDarkMode] = useState(
     document.documentElement.classList.contains('dark')
@@ -125,7 +149,7 @@ const CustomLineChart: React.FC<CustomLineChartProps> = ({
                 hour12: true,
               });
             }}
-            formatter={(value: number) => [`${value}${unit}`, title]}
+            formatter={(value: number, name: string) => [`${value}${unit}`, name]}
             contentStyle={{
               backgroundColor: isDarkMode ? '#333' : '#fff',
               borderColor: isDarkMode ? '#888' : '#ccc',
@@ -133,6 +157,7 @@ const CustomLineChart: React.FC<CustomLineChartProps> = ({
             itemStyle={{ color: axisColor }}
             labelStyle={{ color: axisColor }}
           />
+          {/* Render the main line */}
           <Line
             type="linear"
             dataKey={dataKey}
@@ -142,6 +167,20 @@ const CustomLineChart: React.FC<CustomLineChartProps> = ({
             activeDot={{ r: 6 }}
             isAnimationActive={false}
           />
+          {/* Render additional lines if any */}
+          {additionalLines.map((line, index) => (
+            <Line
+              key={index}
+              type="linear"
+              dataKey={line.dataKey}
+              stroke={line.strokeColor}
+              strokeWidth={2}
+              strokeDasharray={line.strokeDasharray}
+              dot={false} // Optional: disable dots for additional lines
+              activeDot={{ r: 6 }}
+              isAnimationActive={false}
+            />
+          ))}
         </LineChart>
       </ResponsiveContainer>
     </div>
