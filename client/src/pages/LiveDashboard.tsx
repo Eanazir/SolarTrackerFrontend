@@ -4,6 +4,7 @@ import CustomLineChart from '../graphs/CustomLineChart';
 import ThermometerChart from '../graphs/ThermometerChart';
 import WindGauge from '../graphs/WindGauge';
 import Timelapse from '../components/Timelapse';
+import Modal from '../components/Modal';
 import axios from 'axios';
 
 interface LiveData {
@@ -75,11 +76,30 @@ const LiveDashboard: React.FC = () => {
   const [lightLuxData, setLightLuxData] = useState<ChartDataPoint[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [error, setError] = useState<string>('');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   // Update the ref whenever data changes
   useEffect(() => {
     dataRef.current = data;
   }, [data]);
+  
+  // Handler for clicking on a data point
+  const handleDataPointClick = (dataPoint: DataPoint) => {
+    if (dataPoint.image_url) {
+      // Preload the image
+      const img = new Image();
+      img.src = dataPoint.image_url;
+      img.onload = () => {
+        setSelectedImage(dataPoint.image_url || null);
+      };
+      img.onerror = () => {
+        console.error('Error loading image:', dataPoint.image_url);
+        setError('Failed to load the selected image.');
+      };
+    } else {
+      setSelectedImage(null);
+    }
+  };
 
   // Function to fetch historical data for the last day
   const fetchHistoricalData = async () => {
@@ -113,24 +133,28 @@ const LiveDashboard: React.FC = () => {
           last200Data.map((d) => ({
             time: new Date(d.timestamp.slice(0, -1)).getTime(),
             value: d.temperature_c ? parseFloat(d.temperature_c.toFixed(2)) : 0,
+            image_url: d.image_url,
           }))
         );
         setHumidityData(
           last200Data.map((d) => ({
             time: new Date(d.timestamp.slice(0, -1)).getTime(),
             value: d.humidity ? parseFloat(d.humidity.toFixed(2)) : 0,
+            image_url: d.image_url,
           }))
         );
         setAirPressureData(
           last200Data.map((d) => ({
             time: new Date(d.timestamp.slice(0, -1)).getTime(),
             value: d.pressure ? parseFloat(d.pressure.toFixed(2)) : 0,
+            image_url: d.image_url,
           }))
         );
         setWindMaxSpeedData(
           last200Data.map((d) => ({
             time: new Date(d.timestamp.slice(0, -1)).getTime(),
             value: d.ambientweatherwindmaxspeed ? parseFloat(d.ambientweatherwindmaxspeed.toFixed(2)) : 0,
+            image_url: d.image_url,
           }))
         );
 
@@ -138,6 +162,7 @@ const LiveDashboard: React.FC = () => {
           last200Data.map((d) => ({
             time: new Date(d.timestamp.slice(0, -1)).getTime(),
             value: d.ambientweathertemp ? parseFloat(d.ambientweathertemp.toFixed(2)) : 0,
+            image_url: d.image_url,
           }))
         );
         
@@ -145,6 +170,7 @@ const LiveDashboard: React.FC = () => {
           last200Data.map((d) => ({
             time: new Date(d.timestamp.slice(0, -1)).getTime(),
             value: d.ambientweatherhumidity ? parseFloat(d.ambientweatherhumidity.toFixed(2)) : 0,
+            image_url: d.image_url,
           }))
         );
         
@@ -152,6 +178,7 @@ const LiveDashboard: React.FC = () => {
           last200Data.map((d) => ({
             time: new Date(d.timestamp.slice(0, -1)).getTime(),
             value: d.ambientweatherwinddirection ? parseFloat(d.ambientweatherwinddirection.toFixed(2)) : 0,
+            image_url: d.image_url,
           }))
         );
         
@@ -159,6 +186,7 @@ const LiveDashboard: React.FC = () => {
           last200Data.map((d) => ({
             time: new Date(d.timestamp.slice(0, -1)).getTime(),
             value: d.ambientweatherwindspeed ? parseFloat(d.ambientweatherwindspeed.toFixed(2)) : 0,
+            image_url: d.image_url,
           }))
         );
         
@@ -166,18 +194,21 @@ const LiveDashboard: React.FC = () => {
           last200Data.map((d) => ({
             time: new Date(d.timestamp.slice(0, -1)).getTime(),
             value: d.ambientweatherrain ? parseFloat(d.ambientweatherrain.toFixed(2)) : 0,
+            image_url: d.image_url,
           }))
         );
         setUVData(
           last200Data.map((d) => ({
             time: new Date(d.timestamp.slice(0, -1)).getTime(),
             value: d.ambientweatheruv ? d.ambientweatheruv : 0,
+            image_url: d.image_url,
           }))
         );
         setLightLuxData(
           last200Data.map((d) => ({
             time: new Date(d.timestamp.slice(0, -1)).getTime(),
             value: d.ambientweatherlightlux ? parseFloat(d.ambientweatherlightlux.toFixed(2)) : 0,
+            image_url: d.image_url,
           }))
         );
 
@@ -251,42 +282,42 @@ if (axios.isAxiosError(error)) {
 
         const timestamp = new Date(newData.timestamp.slice(0, -1)).getTime();
 
-        // Append new data to charts, keeping only last 50 data points
+        // Append new data to charts, keeping only last 200 data points
         setTemperatureData((prevData) => [
           ...prevData.slice(-199),
-          { time: timestamp, value: newData.temperature_c },
+          { time: timestamp, value: newData.temperature_c, image_url: response.data.image_url },
         ]);
         setHumidityData((prevData) => [
           ...prevData.slice(-199),
-          { time: timestamp, value: newData.humidity },
+          { time: timestamp, value: newData.humidity, image_url: response.data.image_url  },
         ]);
         setAirPressureData((prevData) => [
           ...prevData.slice(-199),
-          { time: timestamp, value: newData.pressure },
+          { time: timestamp, value: newData.pressure, image_url: response.data.image_url  },
         ]);
         setWindMaxSpeedData((prevData) => [
           ...prevData.slice(-199),
-          { time: timestamp, value: newData.ambientweatherwindmaxspeed },
+          { time: timestamp, value: newData.ambientweatherwindmaxspeed, image_url: response.data.image_url  },
         ]);
         setAmbientWindSpeedData((prevData) => [
           ...prevData.slice(-199),
-          { time: timestamp, value: newData.ambientweatherwindspeed },
+          { time: timestamp, value: newData.ambientweatherwindspeed, image_url: response.data.image_url  },
         ]);
         setAmbientHumidityData((prevData) => [
           ...prevData.slice(-199),
-          { time: timestamp, value: newData.ambientweatherhumidity },
+          { time: timestamp, value: newData.ambientweatherhumidity, image_url: response.data.image_url  },
         ]);
         setRainData((prevData) => [
           ...prevData.slice(-199),
-          { time: timestamp, value: newData.ambientweatherrain },
+          { time: timestamp, value: newData.ambientweatherrain, image_url: response.data.image_url },
         ]);
         setUVData((prevData) => [
           ...prevData.slice(-199),
-          { time: timestamp, value: newData.ambientweatheruv },
+          { time: timestamp, value: newData.ambientweatheruv, image_url: response.data.image_url  },
         ]);
         setLightLuxData((prevData) => [
           ...prevData.slice(-199),
-          { time: timestamp, value: newData.ambientweatherlightlux },
+          { time: timestamp, value: newData.ambientweatherlightlux, image_url: response.data.image_url  },
         ]);
 
         if (newData.image_url) {
@@ -362,7 +393,7 @@ if (axios.isAxiosError(error)) {
                 title="Solar Irradiance (W/m²)"
                 data={lightLuxData.map(item => ({
                   ...item,
-                  value: item.value * 0.0079 // lux to solar irr
+                  value: item.value * 0.0079, // lux to solar irr
                 }))}
                 dataKey="value"
                 unit=" W/m²"
@@ -370,6 +401,7 @@ if (axios.isAxiosError(error)) {
                 tickFormat="hourly"
                 yAxisLabel="Solar Irradiance (W/m²)"
                 dy={40}
+                onClick={handleDataPointClick}
               />
             </div>
             {/* Temperature Chart */}
@@ -383,6 +415,7 @@ if (axios.isAxiosError(error)) {
                 tickFormat="hourly"
                 yAxisLabel="Temperature (°C)"
                 dy={50}
+                onClick={handleDataPointClick}
               />
             </div>
             {/* Humidity Chart */}
@@ -396,6 +429,7 @@ if (axios.isAxiosError(error)) {
                 tickFormat="hourly"
                 yAxisLabel="Humidity (%)"
                 dy={40}
+                onClick={handleDataPointClick}
               />
             </div>
             {/* Air Pressure Chart */}
@@ -410,6 +444,7 @@ if (axios.isAxiosError(error)) {
                 yAxisLabel="Pressure (hPa)"
                 dy={40}
                 dx={-15}
+                onClick={handleDataPointClick}
               />
             </div>
             <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
@@ -422,6 +457,7 @@ if (axios.isAxiosError(error)) {
                 tickFormat="hourly"
                 yAxisLabel="Wind Direction (°)"
                 dy={40}
+                onClick={handleDataPointClick}
               />
             </div>
             <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
@@ -434,6 +470,7 @@ if (axios.isAxiosError(error)) {
                 tickFormat="hourly"
                 yAxisLabel="Ambient Humidity (%)"
                 dy={40}
+                onClick={handleDataPointClick}
               />
             </div>
 
@@ -450,6 +487,7 @@ if (axios.isAxiosError(error)) {
                 yAxisLabel="Wind Max Speed (km/h)"
                 dy={70}
                 dx={-5}
+                onClick={handleDataPointClick}
               />
             </div>
             <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
@@ -462,6 +500,7 @@ if (axios.isAxiosError(error)) {
                 tickFormat="hourly"
                 yAxisLabel="Wind Speed (m/s)"
                 dy={40}
+                onClick={handleDataPointClick}
               />
             </div>
 
@@ -476,6 +515,7 @@ if (axios.isAxiosError(error)) {
                 tickFormat="hourly"
                 yAxisLabel="Rain (mm)"
                 dy={20}
+                onClick={handleDataPointClick}
               />
             </div>
             {/* UV Index Chart */}
@@ -489,6 +529,7 @@ if (axios.isAxiosError(error)) {
                 yAxisLabel="UV Index"
                 dy={20}
                 dx={10}
+                onClick={handleDataPointClick}
               />
             </div>
             {/* Light Lux Chart */}
@@ -502,6 +543,7 @@ if (axios.isAxiosError(error)) {
                 tickFormat="hourly"
                 yAxisLabel="Light Lux (lx)"
                 dy={40}
+                onClick={handleDataPointClick}
               />
             </div>
             {/* Wind Gauge */}
@@ -535,6 +577,24 @@ if (axios.isAxiosError(error)) {
               )}
             </div>
           </div>
+          {/* Modal for Selected Image */}
+          <Modal isOpen={!!selectedImage} onClose={() => setSelectedImage(null)}>
+            {selectedImage && (
+              <div className="flex flex-col items-center">
+                <img
+                  src={selectedImage}
+                  alt="Selected Data Point"
+                  className="max-w-full h-auto rounded-md shadow-md"
+                />
+                <button
+                  onClick={() => setSelectedImage(null)}
+                  className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                >
+                  Close
+                </button>
+              </div>
+            )}
+          </Modal>
 
           {/* Timelapse Section */}
           <div className="bg-white dark:bg-gray-700 transition-colors duration-300 shadow-md rounded-lg p-6 mt-6 flex flex-col items-center">
