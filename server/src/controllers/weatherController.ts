@@ -276,7 +276,9 @@ export const processWeatherForecast = async (req: Request, res: Response): Promi
 
     if (lastData.rows.length < 5) {
       await pool.query('ROLLBACK');
+      console.log("not enough data in database");
       return res.status(404).json({ error: 'Not enough weather data found' });
+
     }
 
     // Prepare input data tensor
@@ -295,6 +297,7 @@ export const processWeatherForecast = async (req: Request, res: Response): Promi
     let model;
     try {
       model = await tf.loadLayersModel('file://server/src/model/LSTM_MODEL_5MIN.keras');
+      console.log("inputted into the model")
     } catch (modelError) {
       await pool.query('ROLLBACK');
       console.error('Error loading Keras model:', modelError);
@@ -350,6 +353,7 @@ export const processWeatherForecast = async (req: Request, res: Response): Promi
 
 export const getLatestForecast = async (req: Request, res: Response): Promise<Response> => {
   try {
+    console.log("executing get latest forecast")
     const queryText = `
       SELECT forecastdate,
              "5minForecast",
@@ -365,6 +369,9 @@ export const getLatestForecast = async (req: Request, res: Response): Promise<Re
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'No forecasts found.' });
     }
+
+    console.log('Query result:', result.rows);
+
 
     return res.json({
       date: result.rows[0].date,
