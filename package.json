@@ -25,6 +25,7 @@
   "dependencies": {
     "@tensorflow/tfjs-node": "^4.22.0",
     "@types/axios": "^0.14.4",
-    "axios": "^1.7.7"
+    "axios": "^1.7.7",
+    "solartrackerwebapp": "file:"
   }
 }
