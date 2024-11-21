@@ -3,7 +3,27 @@ import { Request, Response } from 'express';
 import pool from '../config/db.js';
 import { Parser } from 'json2csv';
 import * as tf from '@tensorflow/tfjs-node';
+import * as fs from 'fs';
 
+// for inverse transforming model output
+interface ScalerParams {
+  min: number[];
+  scale: number[];
+  data_min: number[];
+  data_max: number[];
+  data_range: number[];
+}
+
+// Load the scaler parameters from the JSON file
+const scalerParams: ScalerParams = JSON.parse(fs.readFileSync('scaler_y_params.json', 'utf8'));
+
+// Function to perform the inverse transformation
+function inverseTransform(scaledValues: number[], scalerParams: ScalerParams): number[] {
+  return scaledValues.map((value, index) => {
+      return (value - scalerParams.min[index]) / scalerParams.scale[index] * scalerParams.data_range[index] + scalerParams.data_min[index];
+  });
+}
+//------------------------------------------
 // Existing insertWeatherDataWithImage handler
 export const insertWeatherDataWithImage = async (req: Request, res: Response): Promise<Response> => {
   const {
@@ -244,69 +264,52 @@ export const processWeatherForecast = async (req: Request, res: Response): Promi
     // Start transaction
     await pool.query('BEGIN');
 
-    // Get the last inserted weather data
+    // Get the last 5 inserted weather data points
     const lastDataQuery = `
       SELECT wd.*, wi.image_url
       FROM weather_data wd
       LEFT JOIN weather_images wi ON wd.id = wi.weather_data_id
       ORDER BY wd.timestamp DESC
-      LIMIT 1
+      LIMIT 5
     `;
     const lastData = await pool.query(lastDataQuery);
 
-    if (!lastData.rows[0]) {
+    if (lastData.rows.length < 5) {
       await pool.query('ROLLBACK');
-      return res.status(404).json({ error: 'No weather data found' });
+      return res.status(404).json({ error: 'Not enough weather data found' });
     }
 
-    if (!lastData.rows[0].image_url) {
-      await pool.query('ROLLBACK');
-      return res.status(404).json({ error: 'No image found for latest weather data' });
-    }
+    // Prepare input data tensor
+    const inputData = lastData.rows.map(row => [
+      parseFloat(row.temperature_c),
+      parseFloat(row.humidity),
+      parseFloat(row.pressure),
+      parseFloat(row.wind_speed),
+      parseFloat(row.wind_direction),
+      parseFloat(row.pressure),
+      parseFloat(row.ambientWeatherUV),
+      parseFloat(new Date(row.timestamp).toISOString().split('T')[1].replace(/:/g, '').slice(0, 4))
+    ]);
 
     // Load Keras model
     let model;
     try {
-      // Load Keras model
-      model = await tf.loadLayersModel('file://server/src/model/LSTM_MODEL.keras');
+      model = await tf.loadLayersModel('file://server/src/model/LSTM_MODEL_5MIN.keras');
     } catch (modelError) {
       await pool.query('ROLLBACK');
       console.error('Error loading Keras model:', modelError);
       return res.status(500).json({ error: 'Error loading Keras model' });
     }
-    
-    const timestamp = new Date(lastData.rows[0].timestamp);
-    const hour = timestamp.getHours() / 23.0; // Normalize hour
-    const dayOfYear = (timestamp.getTime() - new Date(timestamp.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24);
-    const normalizedDayOfYear = dayOfYear / 365.0; // Normalize day of year
-    const windDirRad = (lastData.rows[0].wind_direction * Math.PI) / 180;
-    const windDirSin = Math.sin(windDirRad);
-    const windDirCos = Math.cos(windDirRad);
-    const theTime = new Date(lastData.rows[0].timestamp);
-  const formattedTime = timestamp.toISOString().split('T')[1].replace(/:/g, '').slice(0, 4);
-
-    // Prepare input data tensor
-    const inputData = tf.tensor2d([[
-      parseFloat(lastData.rows[0].temperature_c),
-      parseFloat(lastData.rows[0].humidity),
-      parseFloat(lastData.rows[0].pressure),
-      parseFloat(lastData.rows[0].wind_speed),
-      parseFloat(lastData.rows[0].wind_direction),
-      parseFloat(lastData.rows[0].pressure),
-      parseFloat(lastData.rows[0].ambientWeatherUV),
-      parseFloat(formattedTime)
-    ]]);
-
-    // const imageResponse = await fetch(lastData.rows[0].image_url);
-    // const imageBuffer = await imageResponse.arrayBuffer();
-    // const image = await tf.node.decodeImage(new Uint8Array(imageBuffer), 3);
-    // const processedImage = tf.expandDims(image);
 
     // Get prediction
-    const prediction = model.predict([inputData]) as tf.Tensor;
-    const forecastValues = await prediction.data();
+    const prediction = model.predict(tf.tensor2d(inputData)) as tf.Tensor;
+    const forecastValues = await prediction.array() as number[][];
 
-    const [fiveMin, fifteenMin, thirtyMin, sixtyMin] = forecastValues[0];
+    // Destructure the inner array to get the forecast values
+    const [fiveMin] = forecastValues[0];
+
+    // Inverse transform the 5-minute forecast
+    const originalFiveMin = inverseTransform([fiveMin], scalerParams)[0];
 
     // Insert forecasts query
     const insertForecastQuery = `
@@ -321,11 +324,11 @@ export const processWeatherForecast = async (req: Request, res: Response): Promi
     `;
     
     const forecastParams = [
-      timestamp, // Timestamp associated with the predictions
-      fiveMin,   // 5 min forecast
-      fifteenMin, // 15 min forecast
-      thirtyMin, // 30 min forecast
-      sixtyMin   // 60 min forecast
+      new Date(), // Current timestamp
+      originalFiveMin, // Inverse transformed 5 min forecast
+      0, //
+      0, // 0 for now since we changed model type
+      0 // 0 for now 
     ];
 
     const forecastResult = await pool.query(insertForecastQuery, forecastParams);
@@ -366,9 +369,9 @@ export const getLatestForecast = async (req: Request, res: Response): Promise<Re
     return res.json({
       date: result.rows[0].date,
       '5minForecast': result.rows[0]['5minForecast'],
-      '15minForecast': result.rows[0]['15minForecast'],
-      '30minForecast': result.rows[0]['30minForecast'],
-      '60minForecast': result.rows[0]['60minForecast']
+      '15minForecast': 0,
+      '30minForecast': 0,
+      '60minForecast': 0,
     });
   } catch (error) {
     console.error('Error fetching latest forecast:', error);
