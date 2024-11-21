@@ -12,6 +12,8 @@ import path from 'path';
 declare global {
   var cnn_model: tf.LayersModel | undefined;
   var scaler: Scaler | undefined;
+  var lstm_model: tf.LayersModel | undefined;
+  var lstm_scaler: Scaler | undefined;
 }
 
 // for inverse transforming model output
@@ -510,8 +512,7 @@ export const processWeatherForecast = async (req: Request, res: Response): Promi
 
     // Destructure the inner array to get the forecast values
     const [fiveMin] = forecastValues[0];
-
-    const originalFiveMin = inverseTransform([fiveMin], global.lstm_scaler)[0];
+    const originalFiveMin = global.lstm_scaler.inverseScaleFeatures([fiveMin]); // Inverse transform
     // Insert forecasts query
     const insertForecastQuery = `
       INSERT INTO forecasts (
@@ -527,8 +528,8 @@ export const processWeatherForecast = async (req: Request, res: Response): Promi
     const forecastParams = [
       new Date(), // Current timestamp
       originalFiveMin, // Inverse transformed 5 min forecast
-      0, //
-      0, // 0 for now since we changed model type
+      0, // keep at 0 since we dont need these values anymore
+      0, // 
       0 // 0 for now 
     ];
 
