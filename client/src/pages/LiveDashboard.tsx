@@ -375,23 +375,22 @@ if (axios.isAxiosError(error)) {
                 SolarTracker's Live Weather Data Station
               </h1>
               <p className="text-center text-gray-600 dark:text-gray-300">
-                Real-time solar irradiance and weather analytics monitoring dashboard
+                Real-time solar irradiance and weather analytics monitoring
+                dashboard
               </p>
             </div>
           </header>
 
-
-          
           {error && (
             <div className="bg-red-100 dark:bg-gray-700 transition-colors duration-300 text-red-800 dark:text-red-100 p-4 rounded mb-6">
               <p>{error}</p>
             </div>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
+            <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
               <CustomLineChart
                 title="Solar Irradiance (W/m²)"
-                data={lightLuxData.map(item => ({
+                data={lightLuxData.map((item) => ({
                   ...item,
                   value: item.value * 0.0079, // lux to solar irr
                 }))}
@@ -474,7 +473,6 @@ if (axios.isAxiosError(error)) {
               />
             </div>
 
-
             {/* Wind Max Speed Chart */}
             <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
               <CustomLineChart
@@ -554,7 +552,7 @@ if (axios.isAxiosError(error)) {
               />
             </div>
             {/* Thermometer Charts */}
-            <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300 flex flex-row justify-between space-x-6 items-center">
+            <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300 flex flex-col space-y-4">
               <ThermometerChart temperature={data.temperature_c} unit="C" />
               <ThermometerChart temperature={data.temperature_f} unit="F" />
             </div>
@@ -573,12 +571,17 @@ if (axios.isAxiosError(error)) {
                   />
                 </div>
               ) : (
-                <p className="text-gray-500 text-lg dark:text-gray-300">No image available</p>
+                <p className="text-gray-500 text-lg dark:text-gray-300">
+                  No image available
+                </p>
               )}
             </div>
           </div>
           {/* Modal for Selected Image */}
-          <Modal isOpen={!!selectedImage} onClose={() => setSelectedImage(null)}>
+          <Modal
+            isOpen={!!selectedImage}
+            onClose={() => setSelectedImage(null)}
+          >
             {selectedImage && (
               <div className="flex flex-col items-center">
                 <img
@@ -598,7 +601,9 @@ if (axios.isAxiosError(error)) {
 
           {/* Timelapse Section */}
           <div className="bg-white dark:bg-gray-700 transition-colors duration-300 shadow-md rounded-lg p-6 mt-6 flex flex-col items-center">
-            <h2 className="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-300">Timelapse</h2>
+            <h2 className="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-300">
+              Timelapse
+            </h2>
             {imageUrls.length === 0 ? (
               <div className="flex justify-center items-center h-64 bg-gray-200 rounded-md">
                 <p className="text-gray-500 text-lg dark:text-gray-300">
