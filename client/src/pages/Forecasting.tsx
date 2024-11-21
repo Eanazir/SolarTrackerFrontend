@@ -182,7 +182,6 @@ const Forecasting: React.FC = () => {
           unit=" W/m²"
           yAxisLabel="Solar Irradiance (W/m²)"
           tickFormat="hourly"
-          isDarkMode={isDarkMode}  // Add this prop
         />
       </div>
     </div>
