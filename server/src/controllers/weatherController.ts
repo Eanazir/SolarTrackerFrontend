@@ -23,7 +23,7 @@ interface ScalerParams {
 }
 
 // Load the scaler parameters from the JSON file
-const scalerParams: ScalerParams = JSON.parse(fs.readFileSync('scaler_y_params.json', 'utf8'));
+// const scalerParams: ScalerParams = JSON.parse(fs.readFileSync('scaler_y_params.json', 'utf8'));
 
 // Function to perform the inverse transformation
 function inverseTransform(scaledValues: number[], scalerParams: ScalerParams): number[] {
