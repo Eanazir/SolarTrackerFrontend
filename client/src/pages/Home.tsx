@@ -32,7 +32,7 @@ const Home: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-screen bg-white dark:bg-gray-800 transition-colors duration-500 p-6 pt-20">
+    <div className="flex flex-col items-center justify-start min-h-screen bg-white dark:bg-gray-900 transition-colors duration-500 p-6 pt-20">
       {/* Project Logo */}
       <img src={logo} alt="Project Logo" className="w-58 h-48 mb-8" />
 
@@ -72,7 +72,7 @@ const Home: React.FC = () => {
                 <FaGithub size={24} />
               </a>
               <a
-                href="https://linkedin.com/in/chasemalbright"
+                href="https://www.linkedin.com/in/chase-albright-b82b92202/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:text-blue-400"
