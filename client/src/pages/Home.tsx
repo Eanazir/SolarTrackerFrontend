@@ -55,7 +55,7 @@ const Home: React.FC = () => {
       </p>
 
       {/* Team Members and Live Image in Enhanced Container */}
-      <div className="w-full max-w-5xl mb-8 flex flex-col md:flex-row items-start justify-between space-y-8 md:space-y-0 md:space-x-12 mx-auto">
+      <div className="w-full max-w-5xl mb-8 flex flex-col items-center md:flex-row md:items-start justify-between space-y-8 md:space-y-0 md:space-x-12 mx-auto">
         {/* Team Members Section */}
         <div className="flex-1 bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg">
           <h2 className="text-3xl font-semibold text-gray-800 dark:text-gray-100 mb-6 text-center md:text-left border-b pb-2 border-gray-200 dark:border-gray-700">

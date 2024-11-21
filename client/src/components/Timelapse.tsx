@@ -52,7 +52,7 @@ const Timelapse: React.FC<TimelapseProps> = ({ images, interval = 1500 }) => {
       </div>
 
       {/* Controls */}
-      <div className="mt-4 w-full max-w-2xl flex items-center justify-between">
+      <div className="mt-4 w-full max-w-2xl flex max-sm:flex-col items-center justify-between">
         <div className="flex items-center gap-2">
           {/* Play/Pause Button */}
           <button
