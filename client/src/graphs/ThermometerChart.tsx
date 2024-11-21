@@ -86,7 +86,7 @@ const ThermometerChart: React.FC<ThermometerChartProps> = ({
       className={`shadow-md rounded-lg p-6 w-full flex flex-col items-center justify-center ${backgroundColor} transition-colors duration-300`}
     >
       {/* Chart Title */}
-      <h2 className={`text-2xl font-semibold mb-4 ${textColor}`}>
+      <h2 className={`text-2xl font-semibold mb-4 dark:text-gray-200`}>
         Temperature Gauge (°{unit})
       </h2>
 
@@ -122,7 +122,7 @@ const ThermometerChart: React.FC<ThermometerChartProps> = ({
               paddingAngle={0}
               blendStroke
             >
-              {data.map((entry, index) => (
+              {data.map((_, index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={index === 0 ? activeColor : inactiveColor}
@@ -136,7 +136,8 @@ const ThermometerChart: React.FC<ThermometerChartProps> = ({
               y="75%"
               textAnchor="middle"
               dominantBaseline="middle"
-              className={`text-xl sm:text-2xl font-bold ${textColor}`}
+              fill={isDarkMode ? "#f3f4f6" : "#1f2937"} // Add this line
+              className={`text-xl sm:text-2xl font-bold`} // Remove dark:text-gray-200
             >
               {temperature.toFixed(1)}°{unit}
             </text>

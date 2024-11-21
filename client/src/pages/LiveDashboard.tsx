@@ -107,7 +107,7 @@ const LiveDashboard: React.FC = () => {
       // Calculate the dates for the last day
       const endDate = new Date();
       const startDate = new Date();
-      startDate.setDate(startDate.getDate() - 3); // Last 2 day for now //////////////////
+      startDate.setDate(startDate.getDate());
 
       // Convert dates to CST
       const cstEndDate = new Date(endDate.getTime() + CST_OFFSET * 60 * 60 * 1000);

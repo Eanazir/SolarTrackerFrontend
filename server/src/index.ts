@@ -9,6 +9,9 @@ import fs from 'fs/promises';
 import { Scaler } from './utils/scaler.js';
 import { fileURLToPath } from 'url';
 
+// Get current file path and directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -59,7 +62,7 @@ declare global {
 // Function to load the TensorFlow model
 const loadModel = async () => {
     try {
-        const modelPath = `file:///home/ec2-user/SolarTrackerWebApp/server/src/models/cnn/tfjs_model/model.json`;
+        const modelPath = `file://${path.join(__dirname, 'models/cnn/tfjs_model/model.json')}`;
         global.cnn_model = await tf.loadLayersModel(modelPath);
         console.log('TensorFlow model loaded successfully.');
     } catch (error) {
@@ -71,7 +74,7 @@ const loadModel = async () => {
 // Function to load the scaler parameters
 const loadScaler = async () => {
     try {
-        const scalerPath =  '/home/ec2-user/SolarTrackerWebApp/server/src/models/cnn/scaler_params.json'; // Adjust the path as necessary
+        const scalerPath =  `${path.join(__dirname, 'models/cnn/scaler_params.json')}`; // Adjust the path as necessary
         const scalerData = await fs.readFile(scalerPath, 'utf-8');
         const scalerParams = JSON.parse(scalerData);
         global.scaler = new Scaler(scalerParams);

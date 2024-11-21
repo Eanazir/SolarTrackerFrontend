@@ -4,6 +4,8 @@ import axios from 'axios';
 import React, { useEffect, useState, useMemo } from 'react';
 import CustomLineChart, { LineConfig, CustomDataPoint } from '../graphs/CustomLineChart'; // Import LineConfig and CustomDataPoint types
 
+const LUX_TO_SOLAR_IRR = 0.0079;
+
 interface ForecastInput {
   temperature_c: number;
   wind_speed: number;
@@ -67,6 +69,7 @@ const Forecasting: React.FC = () => {
           endDate: currentDate,
         },
       });
+      console.log('Historical data:', historicalResponse.data);
       
       // Validate and transform response data
       const historical = Array.isArray(historicalResponse.data) 
@@ -97,24 +100,24 @@ const Forecasting: React.FC = () => {
 
     const dataMap: { [key: number]: { time: number; Actual: number; Forecast?: number } } = {};
 
-    // Safe iteration over historical data
+    // Convert lux to solar irradiance for historical data
     historicalData.forEach((point: HistoricalDataPoint) => {
       if (point && point.timestamp) {
         const time = new Date(point.timestamp).getTime();
         dataMap[time] = {
           time,
-          Actual: Number(point.lux_actual) || 0,
+          Actual: (Number(point.lux_actual) || 0) * LUX_TO_SOLAR_IRR,
         };
       }
     });
 
-    // Safe handling of forecast data
+    // Convert lux to solar irradiance for forecast data
     if (latestForecast && latestForecast.forecast_time) {
       const forecastTime = new Date(latestForecast.forecast_time).getTime();
       dataMap[forecastTime] = {
         time: forecastTime,
-        Actual: dataMap[forecastTime]?.Actual ?? 0,
-        Forecast: Number(latestForecast.lux_forecast) || 0,
+        Actual: (dataMap[forecastTime]?.Actual ?? 0) * LUX_TO_SOLAR_IRR,
+        Forecast: (Number(latestForecast.lux_forecast) || 0) * LUX_TO_SOLAR_IRR,
       };
     }
 
@@ -175,7 +178,7 @@ const Forecasting: React.FC = () => {
           strokeColor="#8884d8" // Purple for historical data
           additionalLines={additionalLineConfigs} // Pass additional forecast line
           unit=" W/m²"
-          yAxisLabel="Lux"
+          yAxisLabel="Solar Irradiance (W/m²)"
           tickFormat="hourly"
         />
       </div>
