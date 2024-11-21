@@ -372,10 +372,10 @@ if (axios.isAxiosError(error)) {
           <header className="mb-8">
             <div>
               <h1 className="text-4xl font-bold text-center mb-2 text-gray-800 dark:text-gray-100">
-                Live Weather Data
+                SolarTracker's Live Weather Data Station
               </h1>
               <p className="text-center text-gray-600 dark:text-gray-300">
-                Real-time solar irradiance and weather monitoring
+                Real-time solar irradiance and weather analytics monitoring dashboard
               </p>
             </div>
           </header>
