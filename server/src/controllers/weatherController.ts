@@ -265,8 +265,16 @@ export const processWeatherForecast = async (req: Request, res: Response): Promi
     }
 
     // Load Keras model
-    const model = await tf.loadLayersModel('file://path/to/your/model.json');
-
+    let model;
+    try {
+      // Load Keras model
+      model = await tf.loadLayersModel('file://server/src/model/LSTM_MODEL.keras');
+    } catch (modelError) {
+      await pool.query('ROLLBACK');
+      console.error('Error loading Keras model:', modelError);
+      return res.status(500).json({ error: 'Error loading Keras model' });
+    }
+    
     const timestamp = new Date(lastData.rows[0].timestamp);
     const hour = timestamp.getHours() / 23.0; // Normalize hour
     const dayOfYear = (timestamp.getTime() - new Date(timestamp.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24);
@@ -274,32 +282,36 @@ export const processWeatherForecast = async (req: Request, res: Response): Promi
     const windDirRad = (lastData.rows[0].wind_direction * Math.PI) / 180;
     const windDirSin = Math.sin(windDirRad);
     const windDirCos = Math.cos(windDirRad);
+    const theTime = new Date(lastData.rows[0].timestamp);
+  const formattedTime = timestamp.toISOString().split('T')[1].replace(/:/g, '').slice(0, 4);
 
     // Prepare input data tensor
-    const inputData = tf.tensor2d([
-      lastData.rows[0].temperature_c,
-      lastData.rows[0].humidity,
-      lastData.rows[0].pressure,
-      lastData.rows[0].wind_speed,
-      windDirSin,
-      windDirCos,
-      hour,
-      normalizedDayOfYear
-    ]);
+    const inputData = tf.tensor2d([[
+      parseFloat(lastData.rows[0].temperature_c),
+      parseFloat(lastData.rows[0].humidity),
+      parseFloat(lastData.rows[0].pressure),
+      parseFloat(lastData.rows[0].wind_speed),
+      parseFloat(lastData.rows[0].wind_direction),
+      parseFloat(lastData.rows[0].pressure),
+      parseFloat(lastData.rows[0].ambientWeatherUV),
+      parseFloat(formattedTime)
+    ]]);
 
-    const imageResponse = await fetch(lastData.rows[0].image_url);
-    const imageBuffer = await imageResponse.arrayBuffer();
-    const image = await tf.node.decodeImage(new Uint8Array(imageBuffer), 3);
-    const processedImage = tf.expandDims(image);
+    // const imageResponse = await fetch(lastData.rows[0].image_url);
+    // const imageBuffer = await imageResponse.arrayBuffer();
+    // const image = await tf.node.decodeImage(new Uint8Array(imageBuffer), 3);
+    // const processedImage = tf.expandDims(image);
 
     // Get prediction
-    const prediction = model.predict([processedImage, inputData]) as tf.Tensor;
+    const prediction = model.predict([inputData]) as tf.Tensor;
     const forecastValues = await prediction.data();
+
+    const [fiveMin, fifteenMin, thirtyMin, sixtyMin] = forecastValues[0];
 
     // Insert forecasts query
     const insertForecastQuery = `
       INSERT INTO forecasts (
-        date,
+        forecastDate,
         "5minForecast",
         "15minForecast", 
         "30minForecast",
@@ -307,13 +319,13 @@ export const processWeatherForecast = async (req: Request, res: Response): Promi
       ) VALUES ($1, $2, $3, $4, $5)
       RETURNING id
     `;
-
+    
     const forecastParams = [
       timestamp, // Timestamp associated with the predictions
-      forecastValues[0], // 5 min forecast
-      forecastValues[1], // 15 min forecast
-      forecastValues[2], // 30 min forecast
-      forecastValues[3]  // 60 min forecast
+      fiveMin,   // 5 min forecast
+      fifteenMin, // 15 min forecast
+      thirtyMin, // 30 min forecast
+      sixtyMin   // 60 min forecast
     ];
 
     const forecastResult = await pool.query(insertForecastQuery, forecastParams);
