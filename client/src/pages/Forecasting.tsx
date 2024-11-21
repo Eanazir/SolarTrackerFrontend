@@ -18,7 +18,7 @@ interface HistoricalDataPoint {
   lux_actual: number;
 }
 
-interface LatestForecast {
+interface Forecast {
   id: number;
   weather_data_id: number;
   forecast_time: string; // ISO format
@@ -35,7 +35,7 @@ const Forecasting: React.FC = () => {
   });
   
   const [historicalData, setHistoricalData] = useState<HistoricalDataPoint[]>([]);
-  const [latestForecast, setLatestForecast] = useState<LatestForecast | null>(null);
+  const [forecasts, setForecasts] = useState<Forecast[]>([]);
   
   const [isDarkMode, setIsDarkMode] = useState(
     document.documentElement.classList.contains('dark')
@@ -78,14 +78,15 @@ const Forecasting: React.FC = () => {
       
       setHistoricalData(historical);
 
-      const forecastResponse = await axios.get(`https://sunsightenergy.com/api/latest-forecast-cnn`);
-      setLatestForecast(forecastResponse.data);
+      const forecastResponse = await axios.get(`https://sunsightenergy.com/api/latest-forecasts-cnn`);
+      console.log('Forecasts:', forecastResponse.data);
+      setForecasts(forecastResponse.data);
     } catch (error) {
       console.error('Error fetching data:', error);
       setError('Failed to fetch forecast data. Please try again later.');
       // Reset data on error
       setHistoricalData([]);
-      setLatestForecast(null);
+      setForecasts([]);
     } finally {
       setLoading(false);
     }
@@ -112,14 +113,16 @@ const Forecasting: React.FC = () => {
     });
 
     // Convert lux to solar irradiance for forecast data
-    if (latestForecast && latestForecast.forecast_time) {
-      const forecastTime = new Date(latestForecast.forecast_time).getTime();
-      dataMap[forecastTime] = {
-        time: forecastTime,
-        Actual: (dataMap[forecastTime]?.Actual ?? 0) * LUX_TO_SOLAR_IRR,
-        Forecast: (Number(latestForecast.lux_forecast) || 0) * LUX_TO_SOLAR_IRR,
-      };
-    }
+    forecasts.forEach((forecast: Forecast) => {
+      if (forecast && forecast.forecast_time) {
+        const forecastTime = new Date(forecast.forecast_time).getTime();
+        dataMap[forecastTime] = {
+          time: forecastTime,
+          Actual: (dataMap[forecastTime]?.Actual ?? 0) * LUX_TO_SOLAR_IRR,
+          Forecast: (Number(forecast.lux_forecast) || 0) * LUX_TO_SOLAR_IRR,
+        };
+      }
+    });
 
     return Object.values(dataMap)
       .sort((a, b) => a.time - b.time)
@@ -133,7 +136,7 @@ const Forecasting: React.FC = () => {
 
   // Define line configurations
   const additionalLineConfigs: LineConfig[] = useMemo(() => {
-    if (latestForecast) {
+    if (forecasts.length > 0) {
       return [
         {
           dataKey: 'Forecast',
@@ -143,7 +146,7 @@ const Forecasting: React.FC = () => {
       ];
     }
     return [];
-  }, [latestForecast]);
+  }, [forecasts]);
 
   return (
     <div className="p-4 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-300">

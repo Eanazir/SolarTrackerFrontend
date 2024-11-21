@@ -279,8 +279,6 @@ export const insertWeatherDataWithImage = async (req: Request, res: Response): P
     const currentDate = new Date(`${timestamp}-06:00`);
     console.log('Timestamp:', currentDate);
 
-    // Subtract one day in CST
-    currentDate.setDate(currentDate.getDate() - 1);
     // Format the date to YYYY-MM-DD
     const formattedDate = currentDate.toISOString().split('T')[0];
 
@@ -575,7 +573,7 @@ export const getLatestForecast = async (req: Request, res: Response): Promise<Re
 
 export const getLatestForecastCNN = async (req: Request, res: Response): Promise<Response> => {
   try {
-        // Define CST offset constant
+    // Define CST offset constant
     const CST_OFFSET = -6; // CST is UTC-6
     
     // Get current time in CST
@@ -588,14 +586,15 @@ export const getLatestForecastCNN = async (req: Request, res: Response): Promise
     
     // Replace existing line with:
     const currentTimeCST = getCurrentCST();
+    console.log('Current time in CST:', currentTimeCST);
 
-    // SQL query to fetch the next forecast where forecast_time is greater than current time
+    // SQL query to fetch the next 5 forecasts where forecast_time is greater than current time
     const queryText = `
       SELECT *
       FROM cnn_forecasts
       WHERE forecast_time > $1
       ORDER BY forecast_time ASC
-      LIMIT 1
+      LIMIT 5
     `;
     const result = await pool.query(queryText, [currentTimeCST]);
 
@@ -603,9 +602,9 @@ export const getLatestForecastCNN = async (req: Request, res: Response): Promise
       return res.status(404).json({ message: 'No upcoming forecasts found.' });
     }
 
-    return res.json(result.rows[0]);
+    return res.json(result.rows);
   } catch (error) {
-    console.error('Error fetching the latest forecast:', error);
+    console.error('Error fetching the latest forecasts:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 };
