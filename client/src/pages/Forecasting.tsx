@@ -99,28 +99,27 @@ const Forecasting: React.FC = () => {
       return [];
     }
 
-    const dataMap: { [key: number]: { time: number; Actual: number; Forecast?: number } } = {};
+    const dataMap: { [key: number]: { time: number; Actual?: number; Forecast?: number } } = {};
 
-    // Convert lux to solar irradiance for historical data
-    historicalData.forEach((point: HistoricalDataPoint) => {
-      if (point && point.timestamp) {
-        const time = new Date(point.timestamp).getTime();
-        dataMap[time] = {
-          time,
-          Actual: (Number(point.lux_actual) || 0) * LUX_TO_SOLAR_IRR,
-        };
-      }
-    });
+    // // Convert lux to solar irradiance for historical data
+    // historicalData.forEach((point: HistoricalDataPoint) => {
+    //   if (point && point.timestamp) {
+    //     const time = new Date(point.timestamp).getTime();
+    //     dataMap[time] = {
+    //       time,
+    //       Actual: (Number(point.lux_actual) || 0) * LUX_TO_SOLAR_IRR,
+    //     };
+    //   }
+    // });
 
     // Convert lux to solar irradiance for forecast data
     forecasts.forEach((forecast: Forecast) => {
       if (forecast && forecast.forecast_time) {
-        const forecastTime = new Date(forecast.forecast_time).getTime();
-        dataMap[forecastTime] = {
-          time: forecastTime,
-          Actual: (dataMap[forecastTime]?.Actual ?? 0) * LUX_TO_SOLAR_IRR,
-          Forecast: (Number(forecast.lux_forecast) || 0) * LUX_TO_SOLAR_IRR,
-        };
+        const forecastTime = new Date(forecast.forecast_time.slice(0,-1)).getTime();
+        if (!dataMap[forecastTime]) {
+          dataMap[forecastTime] = { time: forecastTime };
+        }
+        dataMap[forecastTime].Forecast = (Number(forecast.lux_forecast) || 0) * LUX_TO_SOLAR_IRR;
       }
     });
 
@@ -128,7 +127,7 @@ const Forecasting: React.FC = () => {
       .sort((a, b) => a.time - b.time)
       .map(dataPoint => ({
         time: dataPoint.time,
-        value: dataPoint.Actual,
+        value: dataPoint.Actual ?? 0,
         image_url: undefined,
         ...(dataPoint.Forecast !== undefined && { Forecast: dataPoint.Forecast })
       }));
@@ -183,6 +182,7 @@ const Forecasting: React.FC = () => {
           unit=" W/m²"
           yAxisLabel="Solar Irradiance (W/m²)"
           tickFormat="hourly"
+          isDarkMode={isDarkMode}  // Add this prop
         />
       </div>
     </div>

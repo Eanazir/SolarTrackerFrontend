@@ -508,8 +508,8 @@ export const processWeatherForecast = async (req: Request, res: Response): Promi
 
     // Destructure the inner array to get the forecast values
     const [fiveMin] = forecastValues[0];
-
-    const originalFiveMin = inverseTransform([fiveMin], global.lstm_scaler)[0];
+    let originalFiveMin = global.lstm_scaler.inverseScaleFeatures([fiveMin]); // Inverse transform
+    console.log("originalFiveMin", originalFiveMin)
     // Insert forecasts query
     const insertForecastQuery = `
       INSERT INTO forecasts (

@@ -64,9 +64,10 @@ declare global {
 // Function to load the TensorFlow model
 const loadModel = async () => {
     try {
-        const modelPath = `file://${path.join(__dirname, 'models/cnn/tfjs_model/model.json')}`;
+        const modelPath = `file:///home/ec2-user/SolarTrackerWebApp/server/src/models/cnn/tfjs_model/model.json`;
+        const lstm_model_path = `/home/ec2-user/SolarTrackerWebApp/server/src/models/lstm/lstm_tfjs_models/lstm_model.json`;
         global.cnn_model = await tf.loadLayersModel(modelPath);
-        global.lstm_model = await tf.loadLayersModel(lstm_model_path);
+        // global.lstm_model = await tf.loadLayersModel(lstm_model_path);
         console.log('TensorFlow model loaded successfully.');
     } catch (error) {
         console.error('Error loading TensorFlow model:', error);
@@ -77,13 +78,14 @@ const loadModel = async () => {
 // Function to load the scaler parameters
 const loadScaler = async () => {
     try {
-        const scalerPath =  `${path.join(__dirname, 'models/cnn/scaler_params.json')}`; // Adjust the path as necessary
+        const scalerPath =  `/home/ec2-user/SolarTrackerWebApp/server/src/models/cnn/scaler_params.json`; // Adjust the path as necessary
+        const lstm_scalerPath =  `/home/ec2-user/SolarTrackerWebApp/server/src/models/lstm/scaler_y_params.json`; // Adjust the path as necessary
         const scalerData = await fs.readFile(scalerPath, 'utf-8');
-        const lstm_scaler_Data = await fs.readFile(lstm_scalerPath, 'utf-8');
+        // const lstm_scaler_Data = await fs.readFile(lstm_scalerPath, 'utf-8');
         const scalerParams = JSON.parse(scalerData);
-        const lstm_scalerParams = JSON.parse(lstm_scaler_Data);
+        // const lstm_scalerParams = JSON.parse(lstm_scaler_Data);
         global.scaler = new Scaler(scalerParams);
-        global.lstm_scaler = new Scaler(lstm_scalerParams);
+        // global.lstm_scaler = new Scaler(lstm_scalerParams);
         console.log('Scaler parameters loaded successfully.');
     } catch (error) {
         console.error('Error loading scaler parameters:', error);

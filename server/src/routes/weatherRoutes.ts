@@ -63,7 +63,7 @@ router.get('/export-data', typedExportDataToCSV);
 router.get('/latest-forecast', typedGetLatestForecast);
 
 // Add the new route for latest forecasts
-router.get('/latest-forecast-cnn', typedGetLatestForecastCNNt);
+router.get('/latest-forecasts-cnn', typedGetLatestForecastCNNt);
 
 
 
