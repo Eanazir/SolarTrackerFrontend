@@ -1,188 +1,193 @@
-// src/components/Forecasting.tsx
-
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import React, { useEffect, useState, useMemo } from 'react';
-import CustomLineChart, { LineConfig, CustomDataPoint } from '../graphs/CustomLineChart'; // Import LineConfig and CustomDataPoint types
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const LUX_TO_SOLAR_IRR = 0.0079;
-
-interface ForecastInput {
-  temperature_c: number;
-  wind_speed: number;
-  humidity: number;
-  pressure: number;
-}
-
-interface HistoricalDataPoint {
-  timestamp: string; // ISO format
-  lux_actual: number;
-}
-
-interface Forecast {
-  id: number;
-  weather_data_id: number;
-  forecast_time: string; // ISO format
-  lux_forecast: number;
-  // Add other fields if necessary
-}
+const SCALER = 90;
 
 const Forecasting: React.FC = () => {
-  const [inputs, setInputs] = useState<ForecastInput>({
-    temperature_c: 20,
-    wind_speed: 5,
-    humidity: 50,
-    pressure: 1013,
-  });
-  
-  const [historicalData, setHistoricalData] = useState<HistoricalDataPoint[]>([]);
-  const [forecasts, setForecasts] = useState<Forecast[]>([]);
-  
-  const [isDarkMode, setIsDarkMode] = useState(
-    document.documentElement.classList.contains('dark')
-  );
-
-  // Optional: Add loading and error states for better UX
-  const [loading, setLoading] = useState<boolean>(false);
+  const [historicalData, setHistoricalData] = useState<any[]>([]);
+  const [forecasts, setForecasts] = useState<any[]>([]);
+  const [forecastsAll, setForecastsAll] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [loadingForecastsAll, setLoadingForecastsAll] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [errorForecastsAll, setErrorForecastsAll] = useState<string | null>(null);
 
   useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setIsDarkMode(document.documentElement.classList.contains('dark'));
-    });
+    const fetchData = async () => {
+      try {
+        const currentDate = new Date().toISOString().split('T')[0];
+        
+        const [historicalResponse, forecastResponse] = await Promise.all([
+          axios.get(`https://sunsightenergy.com/api/history-data`, {
+            params: {
+              startDate: currentDate,
+              endDate: currentDate,
+            },
+          }),
+          axios.get(`https://sunsightenergy.com/api/latest-forecasts-cnn`)
+        ]);
 
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class'],
-    });
+        // Process historical data
+        const processedHistoricalData = historicalResponse.data.map(item => ({
+          ...item,
+          Actual: (Number(item.ambientweatherlightlux) || 0) * LUX_TO_SOLAR_IRR,
+          time: new Date(item.timestamp).toLocaleString('en-US', { timeZone: 'UTC' })
+        }));
 
-    return () => observer.disconnect();
+        // Sort historical data by time (in case it's not sorted)
+        processedHistoricalData.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+
+        setHistoricalData(processedHistoricalData);
+
+        setForecasts(forecastResponse.data.map(item => ({
+          ...item,
+          Forecast: (Number(item.lux_forecast) || 0) * LUX_TO_SOLAR_IRR + SCALER,
+          time: new Date(item.forecast_time).toLocaleString('en-US', { timeZone: 'UTC' })
+        })));
+
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setError('Failed to fetch forecast data. Please try again later.');
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  const handleSubmit = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const currentDate = new Date().toISOString().split('T')[0];
-      const historicalResponse = await axios.get(`https://sunsightenergy.com/api/history-data`, {
-        params: {
-          startDate: currentDate,
-          endDate: currentDate,
-        },
-      });
-      console.log('Historical data:', historicalResponse.data);
-      
-      // Validate and transform response data
-      const historical = Array.isArray(historicalResponse.data) 
-        ? historicalResponse.data 
-        : [];
-      
-      setHistoricalData(historical);
-
-      const forecastResponse = await axios.get(`https://sunsightenergy.com/api/latest-forecasts-cnn`);
-      console.log('Forecasts:', forecastResponse.data);
-      setForecasts(forecastResponse.data);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      setError('Failed to fetch forecast data. Please try again later.');
-      // Reset data on error
-      setHistoricalData([]);
-      setForecasts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Prepare data for the chart
-  const prepareChartData = (): CustomDataPoint[] => {
-    if (!Array.isArray(historicalData)) {
-      console.warn('Historical data is not an array');
-      return [];
-    }
-
-    const dataMap: { [key: number]: { time: number; Actual?: number; Forecast?: number } } = {};
-
-    // // Convert lux to solar irradiance for historical data
-    // historicalData.forEach((point: HistoricalDataPoint) => {
-    //   if (point && point.timestamp) {
-    //     const time = new Date(point.timestamp).getTime();
-    //     dataMap[time] = {
-    //       time,
-    //       Actual: (Number(point.lux_actual) || 0) * LUX_TO_SOLAR_IRR,
-    //     };
-    //   }
-    // });
-
-    // Convert lux to solar irradiance for forecast data
-    forecasts.forEach((forecast: Forecast) => {
-      if (forecast && forecast.forecast_time) {
-        const forecastTime = new Date(forecast.forecast_time.slice(0,-1)).getTime();
-        if (!dataMap[forecastTime]) {
-          dataMap[forecastTime] = { time: forecastTime };
-        }
-        dataMap[forecastTime].Forecast = (Number(forecast.lux_forecast) || 0) * LUX_TO_SOLAR_IRR;
+  useEffect(() => {
+    const fetchForecastsAll = async () => {
+      try {
+        setLoadingForecastsAll(true);
+        const response = await axios.get('https://sunsightenergy.com/api/latest-forecasts-cnn-all');
+        setForecastsAll(response.data.map(item => ({
+          ...item,
+          ForecastAll: (Number(item.lux_forecast) || 0) * LUX_TO_SOLAR_IRR + SCALER,
+          time: new Date(item.forecast_time).toLocaleString('en-US', { timeZone: 'UTC' })
+        })));
+        setLoadingForecastsAll(false);
+      } catch (error) {
+        console.error('Error fetching data from latest-forecasts-cnn-all:', error);
+        setErrorForecastsAll('Failed to fetch data from latest-forecasts-cnn-all. Please try again later.');
+        setLoadingForecastsAll(false);
       }
-    });
+    };
+    fetchForecastsAll();
+  }, []);
 
-    return Object.values(dataMap)
-      .sort((a, b) => a.time - b.time)
-      .map(dataPoint => ({
-        time: dataPoint.time,
-        value: dataPoint.Actual ?? 0,
-        image_url: undefined,
-        ...(dataPoint.Forecast !== undefined && { Forecast: dataPoint.Forecast })
-      }));
-  };
+  // Slice historical data to show only the most recent 100 points
+  const historicalDataRecent = historicalData.slice(-50);
 
-  // Define line configurations
-  const additionalLineConfigs: LineConfig[] = useMemo(() => {
-    if (forecasts.length > 0) {
-      return [
-        {
-          dataKey: 'Forecast',
-          strokeColor: '#82ca9d', // Green for forecast
-          strokeDasharray: '5 5',  // Dotted line
-        },
-      ];
+  const chartData = [...historicalDataRecent, ...forecasts].reduce((acc, curr) => {
+    const existingIndex = acc.findIndex(item => item.time === curr.time);
+    if (existingIndex === -1) {
+      acc.push(curr);
+    } else {
+      acc[existingIndex] = { ...acc[existingIndex], ...curr };
     }
-    return [];
-  }, [forecasts]);
+    return acc;
+  }, []).sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+
+  const chartDataAll = [...historicalData, ...forecastsAll].reduce((acc, curr) => {
+    const existingIndex = acc.findIndex(item => item.time === curr.time);
+    if (existingIndex === -1) {
+      acc.push(curr);
+    } else {
+      acc[existingIndex] = { ...acc[existingIndex], ...curr };
+    }
+    return acc;
+  }, []).sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+
+  if (loading || loadingForecastsAll) return <div>Loading...</div>;
+  if (error || errorForecastsAll) return <div className="text-red-500">{error || errorForecastsAll}</div>;
 
   return (
-    <div className="p-12 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-300">
+    <div className="p-12 bg-gray-50 dark:bg-gray-800 min-h-screen">
       <h1 className="text-4xl font-bold mb-8 text-center text-gray-800 dark:text-gray-100">
-        Solar Irradiance Forecasting
+        Solar Irradiance Forecast
       </h1>
 
-      {/* Generate Forecast Button */}
-      <div className="flex justify-center mb-8">
-        <button
-          onClick={handleSubmit}
-          className="px-6 py-3 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors duration-300"
-          disabled={loading}
-        >
-          {loading ? 'Loading...' : 'Generate Forecast'}
-        </button>
+      {/* First Graph */}
+      <h2 className="text-2xl font-bold mb-4 text-center text-gray-800 dark:text-gray-100">
+        Forecast using latest-forecasts-cnn
+      </h2>
+
+      <div className="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md">
+        <ResponsiveContainer width="100%" height={400}>
+          <LineChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis 
+              dataKey="time" 
+              tickFormatter={(timeStr) => new Date(timeStr).toLocaleTimeString()}
+            />
+            <YAxis label={{ value: 'Solar Irradiance (W/m²)', angle: -90, position: 'insideLeft' }} />
+            <Tooltip 
+              labelFormatter={(timeStr) => new Date(timeStr).toLocaleString()}
+              formatter={(value, name) => [value.toFixed(2), name]}
+            />
+            <Legend />
+            
+            <Line 
+              type="monotone" 
+              dataKey="Actual" 
+              stroke="#8884d8" 
+              strokeWidth={2}
+              name="Actual Irradiance"
+            />
+            
+            <Line 
+              type="monotone" 
+              dataKey="Forecast" 
+              stroke="#82ca9d" 
+              strokeWidth={2}
+              strokeDasharray="5 5"
+              name="Forecast Irradiance"
+            />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
 
-      {/* Display Error Message */}
-      {error && (
-        <div className="flex justify-center mb-4">
-          <p className="text-red-500">{error}</p>
-        </div>
-      )}
+      {/* Second Graph */}
+      <h2 className="text-2xl font-bold mt-12 mb-4 text-center text-gray-800 dark:text-gray-100">
+        Forecast using latest-forecasts-cnn-all
+      </h2>
 
-      {/* Chart */}
-      <div className="mt-8 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
-        <CustomLineChart
-          title="Solar Irradiance Forecast"
-          data={prepareChartData()}
-          dataKey="Actual" // Main historical data key
-          strokeColor="#8884d8" // Purple for historical data
-          additionalLines={additionalLineConfigs} // Pass additional forecast line
-          unit=" W/m²"
-          yAxisLabel="Solar Irradiance (W/m²)"
-          tickFormat="hourly"
-        />
+      <div className="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md">
+        <ResponsiveContainer width="100%" height={400}>
+          <LineChart data={chartDataAll}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis 
+              dataKey="time" 
+              tickFormatter={(timeStr) => new Date(timeStr).toLocaleTimeString()}
+            />
+            <YAxis label={{ value: 'Solar Irradiance (W/m²)', angle: -90, position: 'insideLeft' }} />
+            <Tooltip 
+              labelFormatter={(timeStr) => new Date(timeStr).toLocaleString()}
+              formatter={(value, name) => [value.toFixed(2), name]}
+            />
+            <Legend />
+            
+            <Line 
+              type="monotone" 
+              dataKey="Actual" 
+              stroke="#8884d8" 
+              strokeWidth={2}
+              name="Actual Irradiance"
+            />
+            
+            <Line 
+              type="monotone" 
+              dataKey="ForecastAll" 
+              stroke="#FF0000" 
+              strokeWidth={2}
+              strokeDasharray="5 5"
+              name="ForecastAll Irradiance"
+            />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
