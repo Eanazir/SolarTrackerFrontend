@@ -392,7 +392,7 @@ if (axios.isAxiosError(error)) {
                 title="Solar Irradiance (W/m²)"
                 data={lightLuxData.map((item) => ({
                   ...item,
-                  value: item.value * 0.0079, // lux to solar irr
+                  value: parseFloat((item.value * 0.0079).toFixed(2)), // lux to solar irr
                 }))}
                 dataKey="value"
                 unit=" W/m²"
@@ -490,13 +490,13 @@ if (axios.isAxiosError(error)) {
             </div>
             <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
               <CustomLineChart
-                title="Wind Speed (m/s)"
+                title="Wind Speed (km/h)"
                 data={ambientWindSpeedData}
                 dataKey="value"
-                unit=" m/s"
+                unit=" km/h"
                 strokeColor="#32CD32"
                 tickFormat="hourly"
-                yAxisLabel="Wind Speed (m/s)"
+                yAxisLabel="Wind Speed (km/h)"
                 dy={40}
                 onClick={handleDataPointClick}
               />
@@ -519,12 +519,12 @@ if (axios.isAxiosError(error)) {
             {/* UV Index Chart */}
             <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-700 transition-colors duration-300">
               <CustomLineChart
-                title="UV Index"
+                title="UV"
                 data={uvData}
                 dataKey="value"
                 strokeColor="#FFA07A"
                 tickFormat="hourly"
-                yAxisLabel="UV Index"
+                yAxisLabel="UV"
                 dy={20}
                 dx={10}
                 onClick={handleDataPointClick}
@@ -567,7 +567,7 @@ if (axios.isAxiosError(error)) {
                   <img
                     src={data.image_url}
                     alt="Weather"
-                    className="w-56 h-56 object-cover rounded"
+                    className="w-full h-full object-cover rounded"
                   />
                 </div>
               ) : (

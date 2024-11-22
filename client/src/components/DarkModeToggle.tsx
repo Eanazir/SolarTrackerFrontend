@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 
 const DarkModeToggle: React.FC = () => {
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(
-    () => localStorage.getItem('theme') === 'dark'
-  );
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    const theme = localStorage.getItem('theme');
+    return theme ? theme === 'dark' : true; // Default to dark mode
+  });
 
   useEffect(() => {
     const root = window.document.documentElement;
