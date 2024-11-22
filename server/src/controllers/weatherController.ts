@@ -298,6 +298,7 @@ export const insertWeatherDataWithImage = async (req: Request, res: Response): P
     if (dataPointCount >= 5) {
         // Proceed to process forecast
         const forecastResponse = await processCnnWeatherForecast(weatherDataId);
+        const lstm_response = await processWeatherForecast();
         if (!forecastResponse.success) {
             console.error(`Forecast processing failed for weather_data_id: ${weatherDataId}`);
             // Optionally, you can notify the user or log this event
@@ -452,17 +453,17 @@ export const exportDataToCSV = async (req: Request, res: Response): Promise<Resp
 
 
 
-export const processWeatherForecast = async (req: Request, res: Response): Promise<Response> => {
+export const processWeatherForecast = async (): Promise<{ success: boolean, forecast?: any }> => {
   try {
-
     if (!global.lstm_model) {
       console.error('TensorFlow model is not loaded.');
-      return res.status(500).json({ error: 'TensorFlow model is not loaded.' });
+      return { success: false };
     }
     if (!global.lstm_scaler) {
       console.error('Scaler is not loaded.');
-      return res.status(500).json({ error: 'TensorFlow model is not loaded.' });
+      return { success: false };
     }
+
     // Start transaction
     await pool.query('BEGIN');
 
@@ -479,8 +480,7 @@ export const processWeatherForecast = async (req: Request, res: Response): Promi
     if (lastData.rows.length < 5) {
       await pool.query('ROLLBACK');
       console.log("not enough data in database");
-      return res.status(404).json({ error: 'Not enough weather data found' });
-
+      return { success: false, forecast: 'Not enough weather data found' };
     }
 
     // Prepare input data tensor
@@ -494,33 +494,25 @@ export const processWeatherForecast = async (req: Request, res: Response): Promi
       parseFloat(row.ambientWeatherUV),
       parseFloat(new Date(row.timestamp).toISOString().split('T')[1].replace(/:/g, '').slice(0, 4))
     ]);
-    
+
     // Convert inputData to a 3D array
     const input3DData = [inputData];
-    
+
     // Get prediction
     const prediction = global.lstm_model.predict(tf.tensor3d(input3DData)) as tf.Tensor;
     const forecastValues = await prediction.array() as number[][];
 
-    // Load Keras model
-    // let model;
-    // try {
-    //   model = await tf.loadLayersModel('file://server/src/model/LSTM_MODEL_5MIN.keras');
-    //   console.log("inputted into the model")
-    // } catch (modelError) {
-    //   await pool.query('ROLLBACK');
-    //   console.error('Error loading Keras model:', modelError);
-    //   return res.status(500).json({ error: 'Error loading Keras model' });
-    // }
-
-
     // Destructure the inner array to get the forecast values
     const [fiveMin] = forecastValues[0];
     const originalFiveMin = global.lstm_scaler.inverseScaleFeatures([fiveMin]); // Inverse transform
+
+    // Get the ID of the last data point
+    const lastDataPointId = lastData.rows[0].id;
+
     // Insert forecasts query
     const insertForecastQuery = `
       INSERT INTO forecasts (
-        forecastDate,
+        weather_data_id,
         "5minForecast",
         "15minForecast", 
         "30minForecast",
@@ -528,63 +520,26 @@ export const processWeatherForecast = async (req: Request, res: Response): Promi
       ) VALUES ($1, $2, $3, $4, $5)
       RETURNING id
     `;
-    
+
     const forecastParams = [
-      new Date(), // Current timestamp
+      lastDataPointId, // ID of the last data point
       originalFiveMin, // Inverse transformed 5 min forecast
-      0, // keep at 0 since we dont need these values anymore
+      0, // keep at 0 since we don't need these values anymore
       0, // 
       0 // 0 for now 
     ];
 
     const forecastResult = await pool.query(insertForecastQuery, forecastParams);
-
+    console.log("forecast result from lstm: ", forecastResult);
     // Commit transaction
     await pool.query('COMMIT');
 
-    return res.status(201).json({
-      message: 'Forecast processed successfully',
-      forecast_id: forecastResult.rows[0].id
-    });
+    return { success: true, forecast: forecastResult.rows[0] };
 
   } catch (error) {
     await pool.query('ROLLBACK');
     console.error('Error processing forecast:', error);
-    return res.status(500).json({ error: 'Error processing forecast' });
-  }
-};
-
-export const getLatestForecast = async (req: Request, res: Response): Promise<Response> => {
-  try {
-    console.log("executing get latest forecast")
-    const queryText = `
-      SELECT forecastdate,
-             "5minForecast",
-             "15minForecast",
-             "30minForecast",
-             "60minForecast"
-      FROM forecasts
-      ORDER BY forecastdate DESC
-      LIMIT 1
-    `;
-    const result = await pool.query(queryText);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'No forecasts found.' });
-    }
-
-    console.log('Query result:', result.rows);
-
-    return res.json({
-      date: result.rows[0].date,
-      '5minForecast': result.rows[0]['5minForecast'],
-      '15minForecast': 0, //keep at 0 since we no longer need 15 min, 30min, 60 min forecast values
-      '30minForecast': 0,
-      '60minForecast': 0,
-    });
-  } catch (error) {
-    console.error('Error fetching latest forecast:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return { success: false, forecast: 'Error processing forecast' };
   }
 };
 
