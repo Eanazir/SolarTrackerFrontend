@@ -575,11 +575,10 @@ export const getLatestForecast = async (req: Request, res: Response): Promise<Re
 
     console.log('Query result:', result.rows);
 
-
     return res.json({
       date: result.rows[0].date,
       '5minForecast': result.rows[0]['5minForecast'],
-      '15minForecast': 0,
+      '15minForecast': 0, //keep at 0 since we no longer need 15 min, 30min, 60 min forecast values
       '30minForecast': 0,
       '60minForecast': 0,
     });
