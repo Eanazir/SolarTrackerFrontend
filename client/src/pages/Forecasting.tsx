@@ -174,7 +174,7 @@ const Forecasting: React.FC = () => {
       </h1>
 
       <h2 className="text-2xl font-bold mb-4 text-center text-gray-800 dark:text-gray-100">
-        Forecast using latest-forecasts-cnn
+        5 minute forecast using CNN model
       </h2>
 
       <div className="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md">
@@ -225,7 +225,7 @@ const Forecasting: React.FC = () => {
       </div>
 
       <h2 className="text-2xl font-bold mt-12 mb-4 text-center text-gray-800 dark:text-gray-100">
-        Forecast using latest-forecasts-cnn-all
+        Full-day forecast using CNN model
       </h2>
 
       <div className="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md">
