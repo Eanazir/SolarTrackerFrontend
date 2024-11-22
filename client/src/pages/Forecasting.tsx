@@ -168,7 +168,7 @@ const Forecasting: React.FC = () => {
   if (error || errorForecastsAll) return <div className="text-red-500">{error || errorForecastsAll}</div>;
 
   return (
-    <div className="p-12 bg-gray-50 dark:bg-gray-800 min-h-screen">
+    <div className="p-12 bg-gray-50 dark:bg-gray-900 min-h-screen">
       <h1 className="text-4xl font-bold mb-8 text-center text-gray-800 dark:text-gray-100">
         Solar Irradiance Forecast
       </h1>
