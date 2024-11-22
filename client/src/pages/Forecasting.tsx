@@ -148,8 +148,8 @@ const Forecasting: React.FC = () => {
   }, [forecasts]);
 
   return (
-    <div className="p-4 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-300">
-      <h1 className="text-2xl font-bold mb-8 text-center text-gray-800 dark:text-gray-100">
+    <div className="p-12 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-300">
+      <h1 className="text-4xl font-bold mb-8 text-center text-gray-800 dark:text-gray-100">
         Solar Irradiance Forecasting
       </h1>
 

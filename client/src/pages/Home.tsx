@@ -39,7 +39,7 @@ const Home: React.FC = () => {
       </div>
 
       {/* Project Title with Enhanced Typography */}
-      <h1 className="text-5xl font-extrabold text-gray-800 dark:text-gray-100 mb-6 text-center bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
+      <h1 className="text-5xl font-extrabold text-gray-800 dark:text-gray-100 pb-6 text-center bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
         Solar Irradiance Monitoring System
       </h1>
 

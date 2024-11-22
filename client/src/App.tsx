@@ -1,12 +1,17 @@
 // src/App.tsx
-import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
-import Home from './pages/Home';
-import LiveDashboard from './pages/LiveDashboard';
-import DarkModeToggle from './components/DarkModeToggle';
-import History from './pages/History';
-import Forecasting from './pages/Forecasting';
-import Logo from './components/Logo';
+import React, { useState } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  NavLink,
+} from "react-router-dom";
+import Home from "./pages/Home";
+import LiveDashboard from "./pages/LiveDashboard";
+import DarkModeToggle from "./components/DarkModeToggle";
+import History from "./pages/History";
+import Forecasting from "./pages/Forecasting";
+import Logo from "./components/Logo";
 
 const App: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -14,13 +19,15 @@ const App: React.FC = () => {
   return (
     <Router>
       {/* Navbar */}
-      <nav className="bg-blue-600 p-2 sm:p-4 text-white">
+      <nav className="bg-blue-600 p-2 sm:p-4 text-white fixed top-0 left-0 right-0 z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Hamburger Menu Icon - Left Side Mobile */}
           <div className="sm:hidden">
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               className="text-white hover:text-gray-200 focus:outline-none"
+              aria-expanded={menuOpen}
+              aria-controls="mobile-menu"
             >
               <svg
                 className="h-6 w-6"
@@ -60,8 +67,8 @@ const App: React.FC = () => {
               className={({ isActive }) =>
                 `${
                   isActive
-                    ? 'font-extrabold bg-blue-800'
-                    : 'font-bold hover:bg-blue-700'
+                    ? "font-extrabold bg-blue-800"
+                    : "font-bold hover:bg-blue-700"
                 } p-2 rounded transition duration-300 text-center`
               }
               end
@@ -73,8 +80,8 @@ const App: React.FC = () => {
               className={({ isActive }) =>
                 `${
                   isActive
-                    ? 'font-extrabold bg-blue-800'
-                    : 'font-bold hover:bg-blue-700'
+                    ? "font-extrabold bg-blue-800"
+                    : "font-bold hover:bg-blue-700"
                 } p-2 rounded transition duration-300 text-center`
               }
             >
@@ -85,8 +92,8 @@ const App: React.FC = () => {
               className={({ isActive }) =>
                 `${
                   isActive
-                    ? 'font-extrabold bg-blue-800'
-                    : 'font-bold hover:bg-blue-700'
+                    ? "font-extrabold bg-blue-800"
+                    : "font-bold hover:bg-blue-700"
                 } p-2 rounded transition duration-300 text-center`
               }
             >
@@ -97,8 +104,8 @@ const App: React.FC = () => {
               className={({ isActive }) =>
                 `${
                   isActive
-                    ? 'font-extrabold bg-blue-800'
-                    : 'font-bold hover:bg-blue-700'
+                    ? "font-extrabold bg-blue-800"
+                    : "font-bold hover:bg-blue-700"
                 } p-2 rounded transition duration-300 text-center`
               }
             >
@@ -113,17 +120,26 @@ const App: React.FC = () => {
         </div>
       </nav>
 
-      {/* Mobile Menu (Below Navbar) */}
-      {menuOpen && (
-        <div className="bg-blue-600 text-white p-2 sm:hidden">
-          <div className="flex flex-col space-y-2">
+      {/* Mobile Menu Overlay */}
+      <div
+        id="mobile-menu"
+        className={`
+          fixed top-0 left-0 w-full bg-blue-600
+          transform transition-transform duration-300 ease-in-out
+          ${menuOpen ? "translate-y-0" : "-translate-y-full"}
+          z-40 text-white
+        `}
+      >
+        {/* Mobile Menu Content */}
+        <div className="mt-[56px] p-4">
+          <div className="flex flex-col space-y-4">
             <NavLink
               to="/"
               className={({ isActive }) =>
                 `${
                   isActive
-                    ? 'font-extrabold bg-blue-800'
-                    : 'font-bold hover:bg-blue-700'
+                    ? "font-extrabold bg-blue-800"
+                    : "font-bold hover:bg-blue-700"
                 } p-2 rounded transition duration-300 text-center`
               }
               end
@@ -136,8 +152,8 @@ const App: React.FC = () => {
               className={({ isActive }) =>
                 `${
                   isActive
-                    ? 'font-extrabold bg-blue-800'
-                    : 'font-bold hover:bg-blue-700'
+                    ? "font-extrabold bg-blue-800"
+                    : "font-bold hover:bg-blue-700"
                 } p-2 rounded transition duration-300 text-center`
               }
               onClick={() => setMenuOpen(false)}
@@ -149,8 +165,8 @@ const App: React.FC = () => {
               className={({ isActive }) =>
                 `${
                   isActive
-                    ? 'font-extrabold bg-blue-800'
-                    : 'font-bold hover:bg-blue-700'
+                    ? "font-extrabold bg-blue-800"
+                    : "font-bold hover:bg-blue-700"
                 } p-2 rounded transition duration-300 text-center`
               }
               onClick={() => setMenuOpen(false)}
@@ -162,8 +178,8 @@ const App: React.FC = () => {
               className={({ isActive }) =>
                 `${
                   isActive
-                    ? 'font-extrabold bg-blue-800'
-                    : 'font-bold hover:bg-blue-700'
+                    ? "font-extrabold bg-blue-800"
+                    : "font-bold hover:bg-blue-700"
                 } p-2 rounded transition duration-300 text-center`
               }
               onClick={() => setMenuOpen(false)}
@@ -172,14 +188,17 @@ const App: React.FC = () => {
             </NavLink>
           </div>
         </div>
-      )}
+      </div>
 
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/dashboard" element={<LiveDashboard />} />
-        <Route path="/history" element={<History />} />
-        <Route path="/forecasting" element={<Forecasting />} />
-      </Routes>
+      {/* Main Content - Add padding to account for fixed navbar */}
+      <div className="pt-[56px]">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/dashboard" element={<LiveDashboard />} />
+          <Route path="/history" element={<History />} />
+          <Route path="/forecasting" element={<Forecasting />} />
+        </Routes>
+      </div>
     </Router>
   );
 };
