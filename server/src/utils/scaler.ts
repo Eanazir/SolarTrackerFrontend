@@ -44,4 +44,22 @@ export class Scaler {
     inverseScaleFeatures(features: number[]): number[] {
         return features.map((val, idx) => (val * this.data_range_[idx]) + this.data_min_[idx]);
     }
+
+    scaleInputData(inputData: number[][]): number[][] {
+        if (!this.data_min_ || !this.data_range_) {
+            throw new Error('Scaler is not properly initialized.');
+        }
+
+        return inputData.map((features, rowIndex) => {
+            if (features.length !== this.data_min_.length) {
+                throw new Error(
+                    `Feature length mismatch at row ${rowIndex}: expected ${this.data_min_.length}, got ${features.length}`
+                );
+            }
+            return this.scaleFeatures(features);
+        });
+    }
+
+    
 }
+

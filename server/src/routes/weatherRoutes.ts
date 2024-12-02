@@ -6,7 +6,7 @@ import {
   getHistoricalData,
   exportDataToCSV,
   processWeatherForecast,
-  getLatestForecast,
+//   getLatestForecast,
   getLatestForecastCNN
 } from '../controllers/weatherController.js';
 import upload from '../middleware/upload.js';
@@ -31,13 +31,13 @@ const typedExportDataToCSV: RequestHandler = (req: Request, res: Response, next)
 };
 
 // Add new typed handler
-const typedProcessForecast: RequestHandler = (req: Request, res: Response, next) => {
-    processWeatherForecast(req, res).catch(next);
-};
+// const typedProcessForecast: RequestHandler = (req: Request, res: Response, next) => {
+//     processWeatherForecast(req, res).catch(next);
+// };
 
-const typedGetLatestForecast: RequestHandler = (req: Request, res: Response, next) => {
-    getLatestForecast(req, res).catch(next);
-};
+// const typedGetLatestForecast: RequestHandler = (req: Request, res: Response, next) => {
+//     getLatestForecast(req, res).catch(next);
+// };
 
 const typedGetLatestForecastCNNt: RequestHandler = (req: Request, res: Response, next) => {
     getLatestForecastCNN(req, res).catch(next);
@@ -45,7 +45,7 @@ const typedGetLatestForecastCNNt: RequestHandler = (req: Request, res: Response,
   
 
 // Add new route after insert-data route
-router.post('/process-forecast', typedProcessForecast);
+// router.post('/process-forecast', typedProcessForecast);
 
 // Route to insert weather data with image
 router.post('/insert-data', upload.single('image'), typedInsertWeatherData);
@@ -60,7 +60,7 @@ router.get('/history-data', typedGetHistoricalData);
 router.get('/export-data', typedExportDataToCSV);
 
 //router to get the latest forecasts from the forecast table
-router.get('/latest-forecast', typedGetLatestForecast);
+// router.get('/latest-forecast', typedGetLatestForecast);
 
 // Add the new route for latest forecasts
 router.get('/latest-forecasts-cnn', typedGetLatestForecastCNNt);
