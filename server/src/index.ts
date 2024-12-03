@@ -59,15 +59,16 @@ declare global {
     var lstm_model: tf.LayersModel | undefined;
     var scaler: Scaler | undefined;
     var lstm_scaler: Scaler | undefined;
+    var lstm_x_scaler: Scaler | undefined;
 }
 
 // Function to load the TensorFlow model
 const loadModel = async () => {
     try {
         const modelPath = `file:///home/ec2-user/SolarTrackerWebApp/server/src/models/cnn/tfjs_model/model.json`;
-        const lstm_model_path = `/home/ec2-user/SolarTrackerWebApp/server/src/models/lstm/lstm_tfjs_models/lstm_model.json`;
+        const lstm_model_path = `file:///home/ec2-user/SolarTrackerWebApp/server/src/models/lstm/NEW_lstmtfjs_models/model.json`;
         global.cnn_model = await tf.loadLayersModel(modelPath);
-        // global.lstm_model = await tf.loadLayersModel(lstm_model_path);
+        global.lstm_model = await tf.loadLayersModel(lstm_model_path);
         console.log('TensorFlow model loaded successfully.');
     } catch (error) {
         console.error('Error loading TensorFlow model:', error);
@@ -81,11 +82,17 @@ const loadScaler = async () => {
         const scalerPath =  `/home/ec2-user/SolarTrackerWebApp/server/src/models/cnn/scaler_params.json`; // Adjust the path as necessary
         const lstm_scalerPath =  `/home/ec2-user/SolarTrackerWebApp/server/src/models/lstm/scaler_y_params.json`; // Adjust the path as necessary
         const scalerData = await fs.readFile(scalerPath, 'utf-8');
-        // const lstm_scaler_Data = await fs.readFile(lstm_scalerPath, 'utf-8');
+        const lstm_scaler_Data = await fs.readFile(lstm_scalerPath, 'utf-8');
         const scalerParams = JSON.parse(scalerData);
-        // const lstm_scalerParams = JSON.parse(lstm_scaler_Data);
+        const lstm_scalerParams = JSON.parse(lstm_scaler_Data);
+
+        const lstm_x_scalerPath = `/home/ec2-user/SolarTrackerWebApp/server/src/models/lstm/scaler_x_params.json`;
+        const lstm_x_scaler_Data = await fs.readFile(lstm_x_scalerPath, 'utf-8');
+        const lstm_x_scalerParams = JSON.parse(lstm_x_scaler_Data);
+
         global.scaler = new Scaler(scalerParams);
-        // global.lstm_scaler = new Scaler(lstm_scalerParams);
+        global.lstm_scaler = new Scaler(lstm_scalerParams);
+        global.lstm_x_scaler = new Scaler(lstm_x_scalerParams);
         console.log('Scaler parameters loaded successfully.');
     } catch (error) {
         console.error('Error loading scaler parameters:', error);

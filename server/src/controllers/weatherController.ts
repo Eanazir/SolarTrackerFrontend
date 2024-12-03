@@ -14,6 +14,7 @@ declare global {
   var scaler: Scaler | undefined;
   var lstm_model: tf.LayersModel | undefined;
   var lstm_scaler: Scaler | undefined;
+  var lstm_x_scaler: Scaler | undefined;
 }
 
 // for inverse transforming model output
@@ -296,7 +297,8 @@ export const insertWeatherDataWithImage = async (req: Request, res: Response): P
     if (dataPointCount >= 5) {
         // Proceed to process forecast
         const forecastResponse = await processCnnWeatherForecast(weatherDataId);
-        const lstm_response = await processWeatherForecast();
+        const lstm_response = await processWeatherForecast(weatherDataId);
+        console.log("lstm response: ", lstm_response);
         if (!forecastResponse.success) {
             console.error(`Forecast processing failed for weather_data_id: ${weatherDataId}`);
             // Optionally, you can notify the user or log this event
@@ -451,7 +453,7 @@ export const exportDataToCSV = async (req: Request, res: Response): Promise<Resp
 
 
 
-export const processWeatherForecast = async (): Promise<{ success: boolean, forecast?: any }> => {
+export const processWeatherForecast = async (weatherDataId: number): Promise<{ success: boolean, forecast?: any }> => {
   try {
     if (!global.lstm_model) {
       console.error('TensorFlow model is not loaded.');
@@ -461,70 +463,92 @@ export const processWeatherForecast = async (): Promise<{ success: boolean, fore
       console.error('Scaler is not loaded.');
       return { success: false };
     }
+    if (!global.lstm_x_scaler) {
+      console.error('Scaler is not loaded.');
+      return { success: false };
+    }
+
 
     // Start transaction
     await pool.query('BEGIN');
 
-    // Get the last 5 inserted weather data points
+    // Get the last 5 inserted weather data points including the provided weatherDataId
     const lastDataQuery = `
       SELECT wd.*, wi.image_url
       FROM weather_data wd
       LEFT JOIN weather_images wi ON wd.id = wi.weather_data_id
+      WHERE wd.id <= $1
       ORDER BY wd.timestamp DESC
       LIMIT 5
     `;
-    const lastData = await pool.query(lastDataQuery);
+    const lastData = await pool.query(lastDataQuery, [weatherDataId]);
 
     if (lastData.rows.length < 5) {
       await pool.query('ROLLBACK');
       console.log("not enough data in database");
-      return { success: false, forecast: 'Not enough weather data found' };
+      return { success: false };
     }
 
+    console.log("pressure value: ", lastData.rows[0].ambientWeatherUVI);
+
     // Prepare input data tensor
-    const inputData = lastData.rows.map(row => [
+    const inputData: number[][] = lastData.rows.map(row => [
       parseFloat(row.temperature_c),
       parseFloat(row.humidity),
       parseFloat(row.pressure),
       parseFloat(row.wind_speed),
       parseFloat(row.wind_direction),
       parseFloat(row.pressure),
-      parseFloat(row.ambientWeatherUV),
+      parseFloat(row.ambientweatheruv), //ambientweatheruv
       parseFloat(new Date(row.timestamp).toISOString().split('T')[1].replace(/:/g, '').slice(0, 4))
     ]);
+
+    console.log("the input data: ", inputData)
+
+    const scaledInputData = global.lstm_x_scaler.scaleInputData(inputData);
+
+    console.log("the scaled input data: ", scaledInputData);
+    // // Convert the scaled data to a 3D tensor for the LSTM model
+    // const inputTensor = tf.tensor3d([scaledInputData]);
+
 
     // Convert inputData to a 3D array
     const input3DData = [inputData];
 
     // Get prediction
     const prediction = global.lstm_model.predict(tf.tensor3d(input3DData)) as tf.Tensor;
-    const forecastValues = await prediction.array() as number[][];
 
+    console.log("the raw prediction: ", prediction);
+    const predictedValue_new = prediction.dataSync()[0];
+    console.log("predicted value new: ", predictedValue_new);
+
+    // Alternatively, using array() asynchronously
+    const predictionArray = await prediction.array() as number[][];
+    const predictedValue = predictionArray[0][0];
+    console.log('Predicted value:', predictedValue);
+
+
+    const forecastValues = await prediction.array() as number[][];
     // Destructure the inner array to get the forecast values
     const [fiveMin] = forecastValues[0];
     const originalFiveMin = global.lstm_scaler.inverseScaleFeatures([fiveMin]); // Inverse transform
+    const new_originalFiveMin = parseFloat(originalFiveMin[0].toFixed(2));
+    console.log("predicted lux from lstm: ", new_originalFiveMin);
 
-    // Get the ID of the last data point
-    const lastDataPointId = lastData.rows[0].id;
-
+    
     // Insert forecasts query
     const insertForecastQuery = `
       INSERT INTO forecasts (
-        weather_data_id,
-        "5minForecast",
-        "15minForecast", 
-        "30minForecast",
-        "60minForecast"
-      ) VALUES ($1, $2, $3, $4, $5)
+        five_min_forecast,
+        weather_data_id
+      ) VALUES ($1, $2)
       RETURNING id
     `;
 
     const forecastParams = [
-      lastDataPointId, // ID of the last data point
-      originalFiveMin, // Inverse transformed 5 min forecast
-      0, // keep at 0 since we don't need these values anymore
-      0, // 
-      0 // 0 for now 
+      // ID of the provided weather data point
+      new_originalFiveMin, // Inverse transformed 5 min forecast
+      weatherDataId
     ];
 
     const forecastResult = await pool.query(insertForecastQuery, forecastParams);
@@ -537,9 +561,38 @@ export const processWeatherForecast = async (): Promise<{ success: boolean, fore
   } catch (error) {
     await pool.query('ROLLBACK');
     console.error('Error processing forecast:', error);
-    return { success: false, forecast: 'Error processing forecast' };
+    return { success: false };
   }
 };
+
+export const getLatestForecast = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    console.log("executing get latest forecast");
+    const queryText = `
+      SELECT weather_data_id,
+             "five_min_forecast"
+      FROM forecasts
+      ORDER BY id DESC
+      LIMIT 1
+    `;
+    const result = await pool.query(queryText);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'No forecasts found.' });
+    }
+
+    console.log('Query result:', result.rows);
+
+    return res.json({
+      id: result.rows[0].id,
+      'five_min_forecast': result.rows[0]['five_min_forecast']
+    });
+  } catch (error) {
+    console.error('Error fetching latest forecast:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 
 export const getLatestForecastCNN = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -567,6 +620,28 @@ export const getLatestForecastCNN = async (req: Request, res: Response): Promise
       LIMIT 5
     `;
     const result = await pool.query(queryText, [currentTimeCST]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'No upcoming forecasts found.' });
+    }
+
+    return res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching the latest forecast backend:', error);
+    return res.status(500).json({ error: 'Internal Server Error in backend' });
+  }
+};
+
+export const getLatestForecastCNNCurrentDay = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    
+
+    // SQL query to fetch the next 5 forecasts where forecast_time is greater than current time
+    const queryText = `
+      SELECT * FROM cnn_forecasts 
+      WHERE DATE(forecast_time) = CURRENT_DATE;
+    `;
+    const result = await pool.query(queryText);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'No upcoming forecasts found.' });

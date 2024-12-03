@@ -6,8 +6,9 @@ import {
   getHistoricalData,
   exportDataToCSV,
   processWeatherForecast,
-//   getLatestForecast,
-  getLatestForecastCNN
+  getLatestForecast,
+  getLatestForecastCNN,
+  getLatestForecastCNNCurrentDay
 } from '../controllers/weatherController.js';
 import upload from '../middleware/upload.js';
 
@@ -42,6 +43,10 @@ const typedExportDataToCSV: RequestHandler = (req: Request, res: Response, next)
 const typedGetLatestForecastCNNt: RequestHandler = (req: Request, res: Response, next) => {
     getLatestForecastCNN(req, res).catch(next);
 };
+
+const typedGetLatestForecastCNNall: RequestHandler = (req: Request, res: Response, next) => {
+    getLatestForecastCNNCurrentDay(req, res).catch(next);
+};
   
 
 // Add new route after insert-data route
@@ -64,6 +69,9 @@ router.get('/export-data', typedExportDataToCSV);
 
 // Add the new route for latest forecasts
 router.get('/latest-forecasts-cnn', typedGetLatestForecastCNNt);
+
+// Add route to get all current day forecasts
+router.get('/latest-forecasts-cnn-all',typedGetLatestForecastCNNall)
 
 
 
